@@ -41,7 +41,6 @@ td{padding:3px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;}
 .hide{display:none;}
 .mt{margin-top:8px;}
 .flex{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-.warn{background:#FFFCF0;border-left:3px solid #D69E2E;padding:6px 10px;font-size:11px;border-radius:3px;margin:6px 0;}
 </style>
 </head>
 <body>
@@ -55,7 +54,6 @@ td{padding:3px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;}
 <button class="btn btn-b" onclick="showCreate()">＋ 新建评估</button>
 <button class="btn btn-s" onclick="loadList()">🔄 刷新</button>
 
-<!-- 新建 -->
 <div id="createForm" class="card hide mt">
 <h3>新建评估</h3>
 <div class="grid">
@@ -66,17 +64,15 @@ td{padding:3px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;}
 </div>
 <div>
 <label>预计上市</label><input id="cDate" placeholder="如：2026年8月">
-<label>为什么做这个产品</label><textarea id="cWhy" rows="3" placeholder="背景和原因"></textarea>
+<label>为什么做</label><textarea id="cWhy" rows="3" placeholder="背景和原因"></textarea>
 </div>
 </div>
-<button class="btn btn-g mt" onclick="createEval()">✅ 创建并生成链接</button>
+<button class="btn btn-g mt" onclick="createEval()">✅ 创建</button>
 <button class="btn btn-s" onclick="hideCreate()">取消</button>
 </div>
 
-<!-- 列表 -->
 <div id="evalList"><p style="color:#A0AEC0;font-size:13px;">加载中…</p></div>
 
-<!-- 详情 -->
 <div id="detailPanel" class="card hide">
 <div class="flex" style="justify-content:space-between;">
 <h3>📊 详情</h3>
@@ -85,7 +81,6 @@ td{padding:3px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;}
 <div id="detailContent"></div>
 </div>
 
-<!-- 决策弹窗 -->
 <div id="decisionModal" class="card hide mt">
 <h3>🎯 决策</h3>
 <div class="grid">
@@ -102,147 +97,140 @@ td{padding:3px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;}
 <button class="btn btn-s" onclick="closeDecision()">取消</button>
 </div>
 
-<!-- 导出 -->
-<div id="exportPanel" class="card hide">
-<div id="exportContent"></div>
-</div>
-
 <script>
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+// 用唯一变量名避免与浏览器扩展冲突
+if(typeof __gsDB === 'undefined'){
+ var __gsURL = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
+ var __gsKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : '';
+ var __gsDB = supabase.createClient(__gsURL, __gsKey);
 
-function genId(){ return 'eval_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-function copyText(t){
- if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>alert('✅ 已复制')).catch(()=>prompt('复制：',t));
- else prompt('复制：',t);
-}
+ function genId(){ return 'eval_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
-function showCreate(){ document.getElementById('createForm').classList.remove('hide'); }
-function hideCreate(){ document.getElementById('createForm').classList.add('hide'); }
-
-async function createEval(){
- const name = document.getElementById('cName').value.trim();
- if(!name){ alert('请填产品名称'); return; }
- const id = genId();
- const {error} = await supabase.from('evaluations').insert({
-  id, name,
-  desc_text: document.getElementById('cDesc').value.trim(),
-  price: document.getElementById('cPrice').value.trim(),
-  launch_date: document.getElementById('cDate').value.trim(),
-  why_text: document.getElementById('cWhy').value.trim(),
-  step: 0, status: 'draft', created_by: '管理员'
- });
- if(error){ alert('创建失败：'+error.message); return; }
- const base = window.location.origin + window.location.pathname.replace(/index\.html$/,'');
- const url = base + 'eval.html?id=' + id;
- alert('✅ 创建成功！\n\n邀请链接：'+url);
- copyText(url);
- ['cName','cDesc','cPrice','cDate','cWhy'].forEach(id=>document.getElementById(id).value='');
- hideCreate();
- loadList();
-}
-
-async function loadList(){
- document.getElementById('evalList').innerHTML = '<p style="color:#A0AEC0;font-size:13px;">加载中…</p>';
- const {data,error} = await supabase.from('evaluations').select('*').order('created_at',{ascending:false});
- if(error){ document.getElementById('evalList').innerHTML = '<p style="color:red;">加载失败</p>'; return; }
- if(!data||data.length===0){
-  document.getElementById('evalList').innerHTML = '<div class="card"><p style="color:#A0AEC0;text-align:center;">还没有评估，点「新建评估」开始</p></div>';
-  return;
+ function copyText(t){
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){alert('✅ 已复制')})['catch'](function(){prompt('复制这个链接：',t)});
+  else prompt('复制这个链接：',t);
  }
- let h = '';
- for(const e of data){
-  const {count:total} = await supabase.from('participants').select('*',{count:'exact',head:true}).eq('eval_id',e.id);
-  const {count:filled} = await supabase.from('participants').select('*',{count:'exact',head:true}).eq('eval_id',e.id).eq('filled',true);
-  const {data:dec} = await supabase.from('decisions').select('result').eq('eval_id',e.id).single();
-  
-  const sMap = {draft:'<span class="status s-draft">📝 草稿</span>',active:'<span class="status s-active">▶ 进行中</span>',done:'<span class="status s-done">✅ 完成</span>'};
-  const steps = ['准备','邀请','问卷','汇总','决策'].map((n,i)=>{
-   const cls = i<e.step?'dot-done':i===e.step?'dot-cur':'dot-wait';
-   return `<span class="dot ${cls}" title="${n}">${i+1}</span>`;
-  }).join('');
-  
-  const base = window.location.origin + window.location.pathname.replace(/index\.html$/,'');
-  const link = base + 'eval.html?id=' + e.id;
-  const decText = dec? (dec.result==='proceed'?'✅ 推进':dec.result==='pause'?'⏸️ 暂缓':'❌ 放弃') : '';
-  
-  h += '<div class="card"><div class="flex" style="justify-content:space-between;">' +
-   '<div><h3>'+e.name+'</h3>'+sMap[e.status||'draft']+'</div>' +
-   '<div class="meta">'+e.desc_text+'</div></div>' +
-   '<div class="step-dots">'+steps+'</div>' +
-   '<div class="meta">📊 '+total+'人受邀 · '+filled+'人已填'+(decText?' · 决策：'+decText:'')+'</div>' +
-   '<div class="flex" style="margin-top:4px;">' +
-   '<button class="btn btn-s" onclick="copyText(\''+link+'\')">🔗 复制链接</button>' +
-   '<button class="btn btn-s" onclick="showDetail(\''+e.id+'\')">📖 详情</button>' +
-   (e.step<4?'<button class="btn btn-b" onclick="nextStep(\''+e.id+'\',\''+e.name+'\')">➡️ Step'+(e.step+1)+'完成</button>':'') +
-   (e.step>=4?'<button class="btn btn-o" onclick="showDecision(\''+e.id+'\')">🎯 决策</button>':'') +
-   '<button class="btn btn-s" onclick="exportCSV(\''+e.id+'\')">📥 导出</button>' +
-   '<button class="btn btn-r" onclick="deleteEval(\''+e.id+'\')">🗑️</button></div></div>';
+
+ function showCreate(){ document.getElementById('createForm').classList.remove('hide'); }
+ function hideCreate(){ document.getElementById('createForm').classList.add('hide'); }
+
+ function createEval(){
+  var name = document.getElementById('cName').value.trim();
+  if(!name){ alert('请填产品名称'); return; }
+  var id = genId();
+  __gsDB.from('evaluations').insert({
+   id: id, name: name,
+   desc_text: document.getElementById('cDesc').value.trim(),
+   price: document.getElementById('cPrice').value.trim(),
+   launch_date: document.getElementById('cDate').value.trim(),
+   why_text: document.getElementById('cWhy').value.trim(),
+   step: 0, status: 'draft', created_by: '管理员'
+  }).then(function(res){
+   if(res.error){ alert('创建失败：'+res.error.message); return; }
+   var base = window.location.origin + window.location.pathname.replace(/index\.html$/,'');
+   var url = base + 'eval.html?id=' + id;
+   alert('✅ 创建成功！\n\n邀请链接：'+url);
+   copyText(url);
+   ['cName','cDesc','cPrice','cDate','cWhy'].forEach(function(id){document.getElementById(id).value='';});
+   hideCreate();
+   loadList();
+  });
  }
- document.getElementById('evalList').innerHTML = h;
-}
 
-async function showDetail(eid){
- const {data:parts} = await supabase.from('participants').select('*').eq('eval_id',eid);
- const {data:dec} = await supabase.from('decisions').select('*').eq('eval_id',eid).single();
- const {data:ev} = await supabase.from('evaluations').select('*').eq('id',eid).single();
- let h = '<div class="meta">'+ev.name+' · Step '+ev.step+'</div>';
- h += '<table><tr><th>发言人</th><th>部门</th><th>问题一</th><th>问题二</th><th>问题三</th></tr>';
- if(parts&&parts.length>0){
-  parts.forEach(p=>{h+='<tr><td>'+p.name+'</td><td>'+(p.department||'-')+'</td><td>'+(p.q1||'-')+'</td><td>'+(p.q2||'-')+'</td><td>'+(p.q3||'-')+'</td></tr>';});
+ function loadList(){
+  document.getElementById('evalList').innerHTML = '<p style="color:#A0AEC0;font-size:13px;">加载中…</p>';
+  __gsDB.from('evaluations').select('*').order('created_at',{ascending:false}).then(function(res){
+   var data = res.data, error = res.error;
+   if(error){ document.getElementById('evalList').innerHTML = '<p style="color:red;">加载失败：'+error.message+'</p>'; return; }
+   if(!data||data.length===0){
+    document.getElementById('evalList').innerHTML = '<div class="card"><p style="color:#A0AEC0;text-align:center;">还没有评估，点「新建评估」开始</p></div>';
+    return;
+   }
+   var h = '';
+   var promises = data.map(function(e){
+    return __gsDB.from('participants').select('*',{count:'exact',head:true}).eq('eval_id',e.id).then(function(r){
+     var total = r.count||0;
+     return __gsDB.from('participants').select('*',{count:'exact',head:true}).eq('eval_id',e.id).eq('filled',true).then(function(r2){
+      var filled = r2.count||0;
+      var sMap = {draft:'<span class="status s-draft">📝 草稿</span>',active:'<span class="status s-active">▶ 进行中</span>',done:'<span class="status s-done">✅ 完成</span>'};
+      var steps = ['准备','邀请','问卷','汇总','决策'].map(function(n,i){
+       var cls = i<e.step?'dot-done':i===e.step?'dot-cur':'dot-wait';
+       return '<span class="dot '+cls+'" title="'+n+'">'+(i+1)+'</span>';
+      }).join('');
+      var base = window.location.origin + window.location.pathname.replace(/index\.html$/,'');
+      var link = base + 'eval.html?id=' + e.id;
+      h += '<div class="card"><div class="flex" style="justify-content:space-between;">' +
+       '<div><h3>'+e.name+'</h3>'+sMap[e.status||'draft']+'</div>' +
+       '<div class="meta">'+(e.desc_text||'')+'</div></div>' +
+       '<div class="step-dots">'+steps+'</div>' +
+       '<div class="meta">📊 '+total+'人受邀 · '+filled+'人已填</div>' +
+       '<div class="flex">' +
+       '<button class="btn btn-s" onclick="copyText(\''+link+'\')">🔗 复制链接</button>' +
+       '<button class="btn btn-s" onclick="showDetail(\''+e.id+'\')">📖 详情</button>' +
+       (e.step<4?'<button class="btn btn-b" onclick="nextStep(\''+e.id+'\',\''+e.name+'\')">➡️ 下一步</button>':'') +
+       (e.step>=4?'<button class="btn btn-o" onclick="showDecision(\''+e.id+'\')">🎯 决策</button>':'') +
+       '<button class="btn btn-r" onclick="deleteEval(\''+e.id+'\')">🗑️</button></div></div>';
+     });
+    });
+   });
+   Promise.all(promises).then(function(){ document.getElementById('evalList').innerHTML = h; });
+  });
  }
- h += '</table><p style="font-size:11px;color:#A0AEC0;">共 '+parts.length+' 人·'+(parts?parts.filter(p=>p.filled).length:0)+'人已填</p>';
- if(dec&&dec.result){h+='<div class="hr"></div><p><strong>决策：</strong>'+(dec.result==='proceed'?'✅ 推进':dec.result==='pause'?'⏸️ 暂缓':'❌ 放弃')+' · '+dec.note+'</p>';}
- document.getElementById('detailContent').innerHTML = h;
- document.getElementById('detailPanel').classList.remove('hide');
-}
-function closeDetail(){ document.getElementById('detailPanel').classList.add('hide'); }
 
-async function nextStep(eid,name){
- const next = prompt('「'+name+'」Step'+' 已完成？输入 yes 确认：');
- if(next!=='yes') return;
- const {data:ev} = await supabase.from('evaluations').select('step').eq('id',eid).single();
- const ns = (ev.step||0)+1;
- await supabase.from('evaluations').update({step:ns,status:ns>=5?'done':'active'}).eq('id',eid);
+ function showDetail(eid){
+  __gsDB.from('participants').select('*').eq('eval_id',eid).then(function(rp){
+   __gsDB.from('decisions').select('*').eq('eval_id',eid).single().then(function(rd){
+    var parts = rp.data, dec = rd.data;
+    var h = '<table><tr><th>发言人</th><th>部门</th><th>问题一</th><th>问题二</th><th>问题三</th></tr>';
+    if(parts&&parts.length>0){
+     parts.forEach(function(p){h+='<tr><td>'+p.name+'</td><td>'+(p.department||'-')+'</td><td>'+(p.q1||'-')+'</td><td>'+(p.q2||'-')+'</td><td>'+(p.q3||'-')+'</td></tr>';});
+    }
+    h += '</table><p style="font-size:11px;color:#A0AEC0;">共 '+(parts?parts.length:0)+' 人</p>';
+    if(dec&&dec.result){h+='<div class="hr"></div><p><strong>决策：</strong>'+(dec.result==='proceed'?'✅ 推进':dec.result==='pause'?'⏸️ 暂缓':'❌ 放弃')+' · '+(dec.note||'')+'</p>';}
+    document.getElementById('detailContent').innerHTML = h;
+    document.getElementById('detailPanel').classList.remove('hide');
+   });
+  });
+ }
+ function closeDetail(){ document.getElementById('detailPanel').classList.add('hide'); }
+
+ function nextStep(eid,name){
+  var next = prompt('「'+name+'」已完成？输入 yes 确认：');
+  if(next!=='yes') return;
+  __gsDB.from('evaluations').select('step').eq('id',eid).then(function(r){
+   var ns = (r.data[0].step||0)+1;
+   __gsDB.from('evaluations').update({step:ns,status:ns>=5?'done':'active'}).eq('id',eid).then(function(){loadList();});
+  });
+ }
+
+ function showDecision(eid){
+  document.getElementById('decisionModal').classList.remove('hide');
+  document.getElementById('decisionModal').dataset.eid = eid;
+ }
+ function closeDecision(){ document.getElementById('decisionModal').classList.add('hide'); }
+
+ function submitDecision(){
+  var eid = document.getElementById('decisionModal').dataset.eid;
+  var result = document.getElementById('decResult').value;
+  var note = document.getElementById('decNote').value;
+  __gsDB.from('decisions').insert({eval_id:eid,result:result,note:note,made_by:'管理员'}).then(function(){
+   __gsDB.from('evaluations').update({status:'done'}).eq('id',eid).then(function(){
+    closeDecision(); loadList(); alert('✅ 决策已记录');
+   });
+  });
+ }
+
+ function deleteEval(eid){
+  if(!confirm('确定删除？')) return;
+  __gsDB.from('participants').delete().eq('eval_id',eid).then(function(){
+   __gsDB.from('decisions').delete().eq('eval_id',eid).then(function(){
+    __gsDB.from('evaluations').delete().eq('id',eid).then(function(){loadList();});
+   });
+  });
+ }
+
  loadList();
 }
-
-function showDecision(eid){
- document.getElementById('decisionModal').classList.remove('hide');
- document.getElementById('decisionModal').dataset.eid = eid;
-}
-function closeDecision(){ document.getElementById('decisionModal').classList.add('hide'); }
-
-async function submitDecision(){
- const eid = document.getElementById('decisionModal').dataset.eid;
- const result = document.getElementById('decResult').value;
- const note = document.getElementById('decNote').value;
- await supabase.from('decisions').insert({eval_id:eid,result,note,made_by:'管理员'});
- await supabase.from('evaluations').update({status:'done'}).eq('id',eid);
- closeDecision();
- loadList();
- alert('✅ 决策已记录');
-}
-
-async function deleteEval(eid){
- if(!confirm('确定删除？包括该评估的所有参与记录？')) return;
- await supabase.from('participants').delete().eq('eval_id',eid);
- await supabase.from('decisions').delete().eq('eval_id',eid);
- await supabase.from('evaluations').delete().eq('id',eid);
- loadList();
-}
-
-async function exportCSV(eid){
- const {data:parts} = await supabase.from('participants').select('*').eq('eval_id',eid);
- const {data:ev} = await supabase.from('evaluations').select('*').eq('id',eid).single();
- let csv = '发言人,部门,觉得怎么样,不放心什么,需要什么支持\n';
- parts.forEach(p=>{csv+=p.name+','+(p.department||'')+','+(p.q1||'')+','+(p.q2||'')+','+(p.q3||'')+'\n';});
- const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
- const url = URL.createObjectURL(blob);
- const a = document.createElement('a'); a.href=url; a.download=ev.name+'_评估记录.csv'; a.click();
- URL.revokeObjectURL(url);
-}
-
-loadList();
 </script>
 </body>
 </html>
