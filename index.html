@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>共生源 · 新产品评估管理</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Microsoft YaHei','PingFang SC',sans-serif;}
+body{background:#F0F4F8;color:#1A202C;padding:20px;max-width:960px;margin:0 auto;}
+h1{font-size:18px;}
+.sub{font-size:12px;color:#4A5568;margin-bottom:12px;}
+.card{background:#fff;border-radius:6px;padding:14px;border:1px solid #E2E8F0;margin-bottom:8px;}
+.card h3{font-size:14px;color:#2B6CB0;display:inline;}
+.meta{font-size:11px;color:#A0AEC0;margin:2px 0;}
+.step-dots{display:flex;gap:3px;margin:4px 0;}
+.dot{width:16px;height:16px;border-radius:50%;font-size:8px;display:flex;align-items:center;justify-content:center;color:#fff;}
+.dot-done{background:#38A169;}
+.dot-cur{background:#2B6CB0;}
+.dot-wait{background:#E2E8F0;color:#A0AEC0;}
+.status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-left:6px;}
+.s-draft{background:#EDF2F7;color:#4A5568;}
+.s-active{background:#C6F6D5;color:#276749;}
+.s-done{background:#BEE3F8;color:#2B6CB0;}
+label{display:block;font-size:12px;color:#4A5568;margin:6px 0 2px;font-weight:600;}
+input,textarea,select{width:100%;padding:6px 8px;border:1px solid #E2E8F0;border-radius:4px;font-size:13px;}
+textarea{resize:vertical;min-height:40px;}
+.btn{padding:6px 18px;border:none;border-radius:4px;font-size:12px;cursor:pointer;margin:3px 2px;}
+.btn-b{background:#2B6CB0;color:#fff;}
+.btn-g{background:#38A169;color:#fff;}
+.btn-r{background:#E53E3E;color:#fff;}
+.btn-o{background:#D69E2E;color:#fff;}
+.btn-s{background:#EDF2F7;color:#4A5568;border:1px solid #E2E8F0;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media(max-width:600px){.grid{grid-template-columns:1fr;}}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:6px 0;}
+th{background:#1A202C;color:#fff;padding:4px 6px;text-align:left;font-size:11px;}
+td{padding:3px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;}
+.hr{border:none;border-top:1px solid #E2E8F0;margin:10px 0;}
+.hide{display:none;}
+.mt{margin-top:8px;}
+.flex{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.warn{background:#FFFCF0;border-left:3px solid #D69E2E;padding:6px 10px;font-size:11px;border-radius:3px;margin:6px 0;}
+</style>
+</head>
+<body>
+
+<div class="flex">
+<h1>📋 新产品焦点小组评估</h1>
+<span style="font-size:11px;color:#A0AEC0;">管理后台</span>
+</div>
+<div class="sub">创建评估 → 发链接 → 看结果 → 做决策</div>
+
+<button class="btn btn-b" onclick="showCreate()">＋ 新建评估</button>
+<button class="btn btn-s" onclick="loadList()">🔄 刷新</button>
+
+<!-- 新建 -->
+<div id="createForm" class="card hide mt">
+<h3>新建评估</h3>
+<div class="grid">
+<div>
+<label>产品名称 *</label><input id="cName" placeholder="如：忆护安">
+<label>一句话卖点</label><input id="cDesc" placeholder="如：清肠·养菌·护脑">
+<label>预计定价</label><input id="cPrice" placeholder="如：468元/月">
+</div>
+<div>
+<label>预计上市</label><input id="cDate" placeholder="如：2026年8月">
+<label>为什么做这个产品</label><textarea id="cWhy" rows="3" placeholder="背景和原因"></textarea>
+</div>
+</div>
+<button class="btn btn-g mt" onclick="createEval()">✅ 创建并生成链接</button>
+<button class="btn btn-s" onclick="hideCreate()">取消</button>
+</div>
+
+<!-- 列表 -->
+<div id="evalList"><p style="color:#A0AEC0;font-size:13px;">加载中…</p></div>
+
+<!-- 详情 -->
+<div id="detailPanel" class="card hide">
+<div class="flex" style="justify-content:space-between;">
+<h3>📊 详情</h3>
+<button class="btn btn-s" onclick="closeDetail()">✕ 关闭</button>
+</div>
+<div id="detailContent"></div>
+</div>
+
+<!-- 决策弹窗 -->
+<div id="decisionModal" class="card hide mt">
+<h3>🎯 决策</h3>
+<div class="grid">
+<div>
+<label>决策结论</label>
+<select id="decResult"><option value="proceed">✅ 推进</option><option value="pause">⏸️ 暂缓</option><option value="stop">❌ 放弃</option></select>
+</div>
+<div>
+<label>决策说明</label>
+<textarea id="decNote" rows="2" placeholder="简单说两句"></textarea>
+</div>
+</div>
+<button class="btn btn-g mt" onclick="submitDecision()">✅ 确认决策</button>
+<button class="btn btn-s" onclick="closeDecision()">取消</button>
+</div>
+
+<!-- 导出 -->
+<div id="exportPanel" class="card hide">
+<div id="exportContent"></div>
+</div>
+
+<script>
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function genId(){ return 'eval_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function copyText(t){
+ if(navigator.clipboard) navigator.clipboard.writeText(t).then(()=>alert('✅ 已复制')).catch(()=>prompt('复制：',t));
+ else prompt('复制：',t);
+}
+
+function showCreate(){ document.getElementById('createForm').classList.remove('hide'); }
+function hideCreate(){ document.getElementById('createForm').classList.add('hide'); }
+
+async function createEval(){
+ const name = document.getElementById('cName').value.trim();
+ if(!name){ alert('请填产品名称'); return; }
+ const id = genId();
+ const {error} = await supabase.from('evaluations').insert({
+  id, name,
+  desc_text: document.getElementById('cDesc').value.trim(),
+  price: document.getElementById('cPrice').value.trim(),
+  launch_date: document.getElementById('cDate').value.trim(),
+  why_text: document.getElementById('cWhy').value.trim(),
+  step: 0, status: 'draft', created_by: '管理员'
+ });
+ if(error){ alert('创建失败：'+error.message); return; }
+ const base = window.location.origin + window.location.pathname.replace(/index\.html$/,'');
+ const url = base + 'eval.html?id=' + id;
+ alert('✅ 创建成功！\n\n邀请链接：'+url);
+ copyText(url);
+ ['cName','cDesc','cPrice','cDate','cWhy'].forEach(id=>document.getElementById(id).value='');
+ hideCreate();
+ loadList();
+}
+
+async function loadList(){
+ document.getElementById('evalList').innerHTML = '<p style="color:#A0AEC0;font-size:13px;">加载中…</p>';
+ const {data,error} = await supabase.from('evaluations').select('*').order('created_at',{ascending:false});
+ if(error){ document.getElementById('evalList').innerHTML = '<p style="color:red;">加载失败</p>'; return; }
+ if(!data||data.length===0){
+  document.getElementById('evalList').innerHTML = '<div class="card"><p style="color:#A0AEC0;text-align:center;">还没有评估，点「新建评估」开始</p></div>';
+  return;
+ }
+ let h = '';
+ for(const e of data){
+  const {count:total} = await supabase.from('participants').select('*',{count:'exact',head:true}).eq('eval_id',e.id);
+  const {count:filled} = await supabase.from('participants').select('*',{count:'exact',head:true}).eq('eval_id',e.id).eq('filled',true);
+  const {data:dec} = await supabase.from('decisions').select('result').eq('eval_id',e.id).single();
+  
+  const sMap = {draft:'<span class="status s-draft">📝 草稿</span>',active:'<span class="status s-active">▶ 进行中</span>',done:'<span class="status s-done">✅ 完成</span>'};
+  const steps = ['准备','邀请','问卷','汇总','决策'].map((n,i)=>{
+   const cls = i<e.step?'dot-done':i===e.step?'dot-cur':'dot-wait';
+   return `<span class="dot ${cls}" title="${n}">${i+1}</span>`;
+  }).join('');
+  
+  const base = window.location.origin + window.location.pathname.replace(/index\.html$/,'');
+  const link = base + 'eval.html?id=' + e.id;
+  const decText = dec? (dec.result==='proceed'?'✅ 推进':dec.result==='pause'?'⏸️ 暂缓':'❌ 放弃') : '';
+  
+  h += '<div class="card"><div class="flex" style="justify-content:space-between;">' +
+   '<div><h3>'+e.name+'</h3>'+sMap[e.status||'draft']+'</div>' +
+   '<div class="meta">'+e.desc_text+'</div></div>' +
+   '<div class="step-dots">'+steps+'</div>' +
+   '<div class="meta">📊 '+total+'人受邀 · '+filled+'人已填'+(decText?' · 决策：'+decText:'')+'</div>' +
+   '<div class="flex" style="margin-top:4px;">' +
+   '<button class="btn btn-s" onclick="copyText(\''+link+'\')">🔗 复制链接</button>' +
+   '<button class="btn btn-s" onclick="showDetail(\''+e.id+'\')">📖 详情</button>' +
+   (e.step<4?'<button class="btn btn-b" onclick="nextStep(\''+e.id+'\',\''+e.name+'\')">➡️ Step'+(e.step+1)+'完成</button>':'') +
+   (e.step>=4?'<button class="btn btn-o" onclick="showDecision(\''+e.id+'\')">🎯 决策</button>':'') +
+   '<button class="btn btn-s" onclick="exportCSV(\''+e.id+'\')">📥 导出</button>' +
+   '<button class="btn btn-r" onclick="deleteEval(\''+e.id+'\')">🗑️</button></div></div>';
+ }
+ document.getElementById('evalList').innerHTML = h;
+}
+
+async function showDetail(eid){
+ const {data:parts} = await supabase.from('participants').select('*').eq('eval_id',eid);
+ const {data:dec} = await supabase.from('decisions').select('*').eq('eval_id',eid).single();
+ const {data:ev} = await supabase.from('evaluations').select('*').eq('id',eid).single();
+ let h = '<div class="meta">'+ev.name+' · Step '+ev.step+'</div>';
+ h += '<table><tr><th>发言人</th><th>部门</th><th>问题一</th><th>问题二</th><th>问题三</th></tr>';
+ if(parts&&parts.length>0){
+  parts.forEach(p=>{h+='<tr><td>'+p.name+'</td><td>'+(p.department||'-')+'</td><td>'+(p.q1||'-')+'</td><td>'+(p.q2||'-')+'</td><td>'+(p.q3||'-')+'</td></tr>';});
+ }
+ h += '</table><p style="font-size:11px;color:#A0AEC0;">共 '+parts.length+' 人·'+(parts?parts.filter(p=>p.filled).length:0)+'人已填</p>';
+ if(dec&&dec.result){h+='<div class="hr"></div><p><strong>决策：</strong>'+(dec.result==='proceed'?'✅ 推进':dec.result==='pause'?'⏸️ 暂缓':'❌ 放弃')+' · '+dec.note+'</p>';}
+ document.getElementById('detailContent').innerHTML = h;
+ document.getElementById('detailPanel').classList.remove('hide');
+}
+function closeDetail(){ document.getElementById('detailPanel').classList.add('hide'); }
+
+async function nextStep(eid,name){
+ const next = prompt('「'+name+'」Step'+' 已完成？输入 yes 确认：');
+ if(next!=='yes') return;
+ const {data:ev} = await supabase.from('evaluations').select('step').eq('id',eid).single();
+ const ns = (ev.step||0)+1;
+ await supabase.from('evaluations').update({step:ns,status:ns>=5?'done':'active'}).eq('id',eid);
+ loadList();
+}
+
+function showDecision(eid){
+ document.getElementById('decisionModal').classList.remove('hide');
+ document.getElementById('decisionModal').dataset.eid = eid;
+}
+function closeDecision(){ document.getElementById('decisionModal').classList.add('hide'); }
+
+async function submitDecision(){
+ const eid = document.getElementById('decisionModal').dataset.eid;
+ const result = document.getElementById('decResult').value;
+ const note = document.getElementById('decNote').value;
+ await supabase.from('decisions').insert({eval_id:eid,result,note,made_by:'管理员'});
+ await supabase.from('evaluations').update({status:'done'}).eq('id',eid);
+ closeDecision();
+ loadList();
+ alert('✅ 决策已记录');
+}
+
+async function deleteEval(eid){
+ if(!confirm('确定删除？包括该评估的所有参与记录？')) return;
+ await supabase.from('participants').delete().eq('eval_id',eid);
+ await supabase.from('decisions').delete().eq('eval_id',eid);
+ await supabase.from('evaluations').delete().eq('id',eid);
+ loadList();
+}
+
+async function exportCSV(eid){
+ const {data:parts} = await supabase.from('participants').select('*').eq('eval_id',eid);
+ const {data:ev} = await supabase.from('evaluations').select('*').eq('id',eid).single();
+ let csv = '发言人,部门,觉得怎么样,不放心什么,需要什么支持\n';
+ parts.forEach(p=>{csv+=p.name+','+(p.department||'')+','+(p.q1||'')+','+(p.q2||'')+','+(p.q3||'')+'\n';});
+ const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement('a'); a.href=url; a.download=ev.name+'_评估记录.csv'; a.click();
+ URL.revokeObjectURL(url);
+}
+
+loadList();
+</script>
+</body>
+</html>
