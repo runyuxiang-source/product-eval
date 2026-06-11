@@ -1,245 +1,424 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>共生源 · 新产品评估管理</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Microsoft YaHei','PingFang SC',sans-serif;}
-body{background:#F0F4F8;color:#1A202C;padding:20px;max-width:960px;margin:0 auto;}
-h1{font-size:18px;}
-.sub{font-size:12px;color:#4A5568;margin-bottom:12px;}
-.card{background:#fff;border-radius:6px;padding:14px;border:1px solid #E2E8F0;margin-bottom:8px;}
+body{background:#F0F4F8;color:#1A202C;padding:20px;max-width:1100px;margin:0 auto;}
+h1{font-size:18px;}.sub{font-size:12px;color:#4A5568;margin-bottom:12px;}
+.card{background:#fff;border-radius:8px;padding:16px;border:1px solid #E2E8F0;margin-bottom:10px;}
 .card h3{font-size:14px;color:#2B6CB0;display:inline;}
 .meta{font-size:11px;color:#A0AEC0;margin:2px 0;}
-.step-dots{display:flex;gap:3px;margin:4px 0;}
-.dot{width:16px;height:16px;border-radius:50%;font-size:8px;display:flex;align-items:center;justify-content:center;color:#fff;}
-.dot-done{background:#38A169;}
-.dot-cur{background:#2B6CB0;}
-.dot-wait{background:#E2E8F0;color:#A0AEC0;}
-.status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-left:6px;}
-.s-draft{background:#EDF2F7;color:#4A5568;}
-.s-active{background:#C6F6D5;color:#276749;}
-.s-done{background:#BEE3F8;color:#2B6CB0;}
-label{display:block;font-size:12px;color:#4A5568;margin:6px 0 2px;font-weight:600;}
-input,textarea,select{width:100%;padding:6px 8px;border:1px solid #E2E8F0;border-radius:4px;font-size:13px;}
+.s-hide{display:none!important;}.mt{margin-top:8px;}.mb{margin-bottom:8px;}.hr{border:none;border-top:1px solid #E2E8F0;margin:12px 0;}
+.flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.flex-1{flex:1;min-width:200px;}
+label{display:block;font-size:11px;color:#4A5568;margin:5px 0 2px;font-weight:600;}
+input,textarea,select{width:100%;padding:6px 9px;border:1px solid #E2E8F0;border-radius:5px;font-size:12px;font-family:inherit;}
 textarea{resize:vertical;min-height:40px;}
-.btn{padding:6px 18px;border:none;border-radius:4px;font-size:12px;cursor:pointer;margin:3px 2px;}
-.btn-b{background:#2B6CB0;color:#fff;}
-.btn-g{background:#38A169;color:#fff;}
-.btn-r{background:#E53E3E;color:#fff;}
-.btn-o{background:#D69E2E;color:#fff;}
-.btn-s{background:#EDF2F7;color:#4A5568;border:1px solid #E2E8F0;}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-@media(max-width:600px){.grid{grid-template-columns:1fr;}}
-table{width:100%;border-collapse:collapse;font-size:12px;margin:6px 0;}
-th{background:#1A202C;color:#fff;padding:4px 6px;text-align:left;font-size:11px;}
-td{padding:3px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;}
-.hr{border:none;border-top:1px solid #E2E8F0;margin:10px 0;}
-.hide{display:none;}
-.mt{margin-top:8px;}
-.flex{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-</style>
-</head>
+input:focus,textarea:focus{outline:none;border-color:#2B6CB0;box-shadow:0 0 0 2px rgba(43,108,176,0.1);}
+.btn{padding:6px 18px;border:none;border-radius:5px;font-size:12px;cursor:pointer;margin:2px;}
+.btn-b{background:#2B6CB0;color:#fff;}.btn-g{background:#38A169;color:#fff;}.btn-r{background:#E53E3E;color:#fff;}
+.btn-o{background:#D69E2E;color:#fff;}.btn-s{background:#EDF2F7;color:#4A5568;border:1px solid #E2E8F0;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;}
+@media(max-width:700px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+table{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0;}
+th{background:#1A202C;color:#fff;padding:3px 6px;text-align:left;font-size:10px;}
+td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;}
+.section-title{font-size:13px;font-weight:600;color:#2B6CB0;margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid #E2E8F0;}
+
+/* 标签系统 */
+.tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:8px;margin:2px;font-weight:600;cursor:pointer;border:none;}
+.tag:hover{opacity:0.8;}
+.tag-p0{background:#E53E3E;color:#fff;}.tag-p1{background:#D69E2E;color:#fff;}.tag-p2{background:#2B6CB0;color:#fff;}
+.tag-p3{background:#A0AEC0;color:#fff;}.tag-p4{background:#805AD5;color:#fff;}.tag-p5{background:#38A169;color:#fff;}
+.tag-urgent{background:#FC8181;color:#fff;}.tag-important{background:#F6AD55;color:#fff;}
+.tag-normal{background:#68D391;color:#fff;}.tag-slow{background:#CBD5E0;color:#4A5568;}
+.tag-off{background:#EDF2F7;color:#A0AEC0;}
+.tag-row{display:flex;gap:3px;flex-wrap:wrap;margin:3px 0;}
+
+/* 工具卡片 */
+.tool-card{background:#F7FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:10px;margin:4px 0;}
+.tool-card h4{font-size:11px;color:#2B6CB0;margin-bottom:2px;}
+.tool-card p{font-size:10px;color:#4A5568;line-height:1.5;}
+.warn{background:#FFFCF0;border-left:3px solid #D69E2E;padding:6px 10px;font-size:10px;border-radius:3px;margin:4px 0;}
+
+/* 矩阵可视化 */
+.matrix{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;margin:6px 0;}
+.m-cell{padding:6px 4px;border-radius:4px;text-align:center;font-size:9px;font-weight:600;color:#fff;}
+.m-empty{background:#F7FAFC;color:#A0AEC0;font-weight:400;}
+</style></head>
 <body>
 
 <div class="flex">
 <h1>📋 新产品焦点小组评估</h1>
-<span style="font-size:11px;color:#A0AEC0;">管理后台</span>
+<span style="font-size:11px;color:#A0AEC0;">多维评估框架</span>
 </div>
-<div class="sub">创建评估 → 发链接 → 看结果 → 做决策</div>
+<div class="sub">每条信息标记决策层级+紧急程度+基本功+价值定位 → 评估专业度拉满</div>
 
+<div class="flex">
 <button class="btn btn-b" onclick="showCreate()">＋ 新建评估</button>
 <button class="btn btn-s" onclick="loadList()">🔄 刷新</button>
+<button class="btn btn-s" onclick="showTools()">📊 专业工具</button>
+</div>
 
-<div id="createForm" class="card hide mt">
-<h3>新建评估</h3>
-<div class="grid">
+<!-- 专业工具面板 -->
+<div id="toolsPanel" class="card s-hide">
+<h3>📊 专业评估工具速查</h3>
+<p style="font-size:11px;color:#4A5568;margin:4px 0 8px;">评估时穿插使用这些工具，让判断更专业</p>
+<div class="grid-4">
+<div class="tool-card"><h4>SWOT分析</h4><p><strong>S</strong>trengths优势<br><strong>W</strong>eaknesses劣势<br><strong>O</strong>pportunities机会<br><strong>T</strong>hreats威胁</p></div>
+<div class="tool-card"><h4>Kano模型</h4><p>用户需求分层：<br>😊 兴奋型（意想不到）<br>😐 期望型（说了才做）<br>😑 基本型（必须要有）</p></div>
+<div class="tool-card"><h4>ICE评分</h4><p>项目优先级打分：<br><strong>I</strong>mpact 影响度<br><strong>C</strong>onfidence 置信度<br><strong>E</strong>ase 容易度<br>每项1-10分，总分排序</p></div>
+<div class="tool-card"><h4>MoSCoW法则</h4><p>需求优先级：<br><strong>M</strong>ust 必须做<br><strong>S</strong>hould 应该做<br><strong>C</strong>ould 可以做<br><strong>W</strong>on't 这次不做</p></div>
+<div class="tool-card"><h4>PEST分析</h4><p><strong>P</strong>olitical 政策<br><strong>E</strong>conomic 经济<br><strong>S</strong>ocial 社会<br><strong>T</strong>echnological 技术</p></div>
+<div class="tool-card"><h4>BCG矩阵</h4><p>▣ 明星（高增长高份额）<br>▣ 金牛（低增长高份额）<br>▣ 问号（高增长低份额）<br>▣ 瘦狗（低增长低份额）</p></div>
+<div class="tool-card"><h4>RICE评分</h4><p>产品优先级：<br><strong>R</strong>each 触达人数<br><strong>I</strong>mpact 影响<br><strong>C</strong>onfidence 置信度<br><strong>E</strong>ffort 投入成本</p></div>
+<div class="tool-card"><h4>AARRR漏斗</h4><p>用户增长：<br>获取→激活→留存→收入→推荐</p></div>
+</div>
+<div class="warn"><strong>建议用法：</strong>填写评估时，用SWOT分析竞品定位、用Kano分类功能优先级、用ICE给项目打分、用MoSCoW决定做不做。评估完可以用这些工具出结论。</div>
+<button class="btn btn-s" onclick="closeTools()">收起</button>
+</div>
+
+<!-- 新建评估表单 -->
+<div id="createForm" class="card s-hide">
+<h3>📝 新建评估 · 多维评估</h3>
+<p style="font-size:11px;color:#4A5568;margin:4px 0;">每条信息标记「决策层级」和「专业工具」标签，评估更清晰</p>
+
+<!-- 决策优先级矩阵可视化 -->
+<div style="background:#F7FAFC;border-radius:6px;padding:8px 10px;margin:8px 0;">
+<div style="font-size:11px;font-weight:600;color:#4A5568;margin-bottom:4px;">🎯 决策优先级矩阵</div>
+<div class="matrix">
+<div class="m-empty"></div><div class="m-empty" style="font-weight:600;">紧急</div><div class="m-empty" style="font-weight:600;">重要</div><div class="m-empty" style="font-weight:600;">常规</div><div class="m-empty" style="font-weight:600;">可缓</div>
+<div style="font-weight:600;font-size:9px;color:#4A5568;">P0必须定</div>
+<div class="m-cell" style="background:#E53E3E;">★★★ 立即</div>
+<div class="m-cell" style="background:#F6AD55;color:#4A5568;">★★☆ 优先</div>
+<div class="m-cell" style="background:#68D391;color:#4A5568;">★★ 正常</div>
+<div class="m-cell" style="background:#CBD5E0;color:#4A5568;">★ 排入</div>
+<div style="font-weight:600;font-size:9px;color:#4A5568;">P1需讨论</div>
+<div class="m-cell" style="background:#FC8181;">★★★ 开会</div>
+<div class="m-cell" style="background:#F6AD55;color:#4A5568;">★★☆ 快议</div>
+<div class="m-cell" style="background:#68D391;color:#4A5568;">★☆ 安排</div>
+<div class="m-cell" style="background:#CBD5E0;color:#4A5568;">☆ 有空聊</div>
+<div style="font-weight:600;font-size:9px;color:#4A5568;">P2需知晓</div>
+<div class="m-cell" style="background:#FC8181;">★★★ 同步</div>
+<div class="m-cell" style="background:#F6AD55;color:#4A5568;">★★ 同步</div>
+<div class="m-cell" style="background:#90CDF4;color:#4A5568;">★ 周报</div>
+<div class="m-cell" style="background:#CBD5E0;color:#4A5568;">存档</div>
+<div style="font-weight:600;font-size:9px;color:#4A5568;">P3忽略</div>
+<div class="m-cell" style="background:#CBD5E0;color:#4A5568;">不动</div>
+<div class="m-cell" style="background:#CBD5E0;color:#4A5568;">不动</div>
+<div class="m-cell" style="background:#EDF2F7;color:#A0AEC0;">—</div>
+<div class="m-cell" style="background:#EDF2F7;color:#A0AEC0;">—</div>
+<div style="font-weight:600;font-size:9px;color:#4A5568;">P4需验证</div>
+<div class="m-cell" style="background:#805AD5;">★★★ 验证</div>
+<div class="m-cell" style="background:#805AD5;">★★☆ 安排</div>
+<div class="m-cell" style="background:#B794F4;color:#fff;">★☆ 排期</div>
+<div class="m-cell" style="background:#CBD5E0;color:#4A5568;">有空验</div>
+</div>
+</div>
+
+<!-- ===== 六项基本功评分（放在表单顶部） ===== -->
+<div class="section-title">📊 六项基本功评分</div>
+<div style="font-size:10px;color:#4A5568;margin-bottom:6px;">每个维度1-5分，评估这个提案的综合质量</div>
+<div class="grid-3">
+<div><label>✨ 提案亮点</label><select id="scoreLight"><option value="">--</option><option value="1">1 平淡</option><option value="2">2 一般</option><option value="3">3 不错</option><option value="4">4 亮眼</option><option value="5">5 惊艳</option></select></div>
+<div><label>🔍 需求洞察</label><select id="scoreInsight"><option value="">--</option><option value="1">1 拍脑袋</option><option value="2">2 有方向</option><option value="3">3 有数据</option><option value="4">4 有深度</option><option value="5">5 一针见血</option></select></div>
+<div><label>⚡ 开发效率</label><select id="scoreEfficiency"><option value="">--</option><option value="1">1 慢/不清</option><option value="2">2 有方向</option><option value="3">3 可接受</option><option value="4">4 高效率</option><option value="5">5 极速</option></select></div>
+<div><label>💰 成本考量</label><select id="scoreCost"><option value="">--</option><option value="1">1 没算账</option><option value="2">2 粗略</option><option value="3">3 算清了</option><option value="4">4 有优化</option><option value="5">5 极致</option></select></div>
+<div><label>📈 数据支撑</label><select id="scoreData"><option value="">--</option><option value="1">1 纯口号</option><option value="2">2 有引用</option><option value="3">3 有数据</option><option value="4">4 多源验证</option><option value="5">5 全面严谨</option></select></div>
+<div><label>⚠️ 风险预判</label><select id="scoreRisk"><option value="">--</option><option value="1">1 只讲好话</option><option value="2">2 提了但不深</option><option value="3">3 有分析</option><option value="4">4 有方案</option><option value="5">5 全面覆盖</option></select></div>
+</div>
+
+<!-- 专业工具推荐（根据评分自动生成） -->
+<div id="toolRecommend" style="font-size:10px;color:#4A5568;margin:4px 0;"></div>
+
+<!-- ===== 表单主体（9大板块） ===== -->
+<!-- 一、产品基础 -->
+<div class="section-title">一、产品基础信息</div>
+<div class="grid-2">
 <div>
-<label>产品名称 *</label><input id="cName" placeholder="如：忆护安">
-<label>一句话卖点</label><input id="cDesc" placeholder="如：清肠·养菌·护脑">
-<label>预计定价</label><input id="cPrice" placeholder="如：468元/月">
+<label>产品名称 *</label><input id="cName" placeholder="如：益生菌运化膏">
+<label>方案类别</label>
+<select id="cType"><option value="A战略产品">A类·战略产品（新品类/核心品）</option><option value="B常规产品">B类·常规产品（现有线延伸）</option><option value="C热点产品">C类·热点产品（节日/热点）</option><option value="D物料支持">D类·物料支持（包装/推广）</option></select>
 </div>
 <div>
+<label>核心卖点</label><textarea id="cDesc" rows="2" placeholder="如：以食益脾·药食同源益生菌膏滋"></textarea>
+<label>品牌线</label>
+<select id="cBrand"><option value="共生源线">共生源线（口服液/益生菌/膏滋）</option><option value="乾元月峰泉线">乾元月峰泉线（矿物质水）</option></select>
+<label>产品形态</label>
+<select id="cForm"><option value="口服液">口服液/口服饮</option><option value="膏滋">膏滋/条包</option><option value="粉剂">粉剂/固体饮料</option><option value="瓶装水">瓶装水/功能水</option><option value="软糖">软糖/压片</option><option value="其他">其他</option></select>
+</div>
+</div>
+<div class="tag-row"><span class="tag tag-p0">P0必须定</span><span class="tag tag-urgent">紧急</span></div>
+
+<!-- 二、用户与场景 -->
+<div class="section-title">二、目标用户与场景</div>
+<div class="grid-2">
+<div>
+<label>目标用户</label><textarea id="cUser" rows="2" placeholder="如：45-55岁女性，关注记忆力下降"></textarea>
+<label>核心痛点</label><textarea id="cPain" rows="2" placeholder="如：饭后困/便溏/腿软，78%误当衰老"></textarea>
+</div>
+<div>
+<label>使用场景</label><textarea id="cScene" rows="2" placeholder="如：晨起空腹/饭后/送礼"></textarea>
+<label>用户认知基础</label>
+<select id="cCognition"><option value="高">高——用户已认知</option><option value="中">中——需1-3句话解释</option><option value="低">低——需从头教育</option></select>
+</div>
+</div>
+<div class="tag-row"><span class="tag tag-p2">P2需知晓</span><span class="tag tag-normal">常规</span></div>
+
+<!-- 三、技术与配方 -->
+<div class="section-title">三、技术与配方</div>
+<div class="grid-3">
+<div>
+<label>配方成熟度</label>
+<select id="cTech"><option value="现货贴牌">①现货贴牌(3-4周)</option><option value="蓝帽贴牌">②蓝帽贴牌(1-2月)</option><option value="自有配方OEM">③自有配方OEM(3-6月)</option></select>
+</div>
+<div><label>核心壁垒</label><select id="cBarrier"><option value="BC299菌株">BC299自有专利菌株</option><option value="独家配方">独家配方/药食同源</option><option value="蓝帽批文">蓝帽批文</option><option value="无">无明显壁垒</option></select></div>
+<div><label>口感盲测</label><select id="cTaste"><option value="未测">未测</option><option value="6分">6/10分</option><option value="7分">7/10</option><option value="8分">8/10</option><option value="9分+">9分+</option></select></div>
+</div>
+<div class="tag-row"><span class="tag tag-p0">P0必须定</span><span class="tag tag-important">重要</span><span class="tag tag-p4">验证-口感</span></div>
+
+<!-- 四、市场与竞争 -->
+<div class="section-title">四、市场与竞争 <span style="font-size:9px;color:#A0AEC0;">推荐工具: SWOT · 波特五力</span></div>
+<div class="grid-2">
+<div><label>市场规模</label><select id="cMarket"><option value="<1亿">&lt;1亿</option><option value="1-10亿">1-10亿</option><option value="10-50亿">10-50亿</option><option value=">50亿">&gt;50亿</option></select></div>
+<div><label>核心区域</label><input id="cRegion" placeholder="如：山东/河北/浙江/广东"></div>
+</div>
+<div class="grid-2">
+<div><label>SWOT-优势</label><textarea id="cSWOT_S" rows="1" placeholder="内部优势"></textarea></div>
+<div><label>SWOT-劣势</label><textarea id="cSWOT_W" rows="1" placeholder="内部劣势"></textarea></div>
+<div><label>SWOT-机会</label><textarea id="cSWOT_O" rows="1" placeholder="外部机会"></textarea></div>
+<div><label>SWOT-威胁</label><textarea id="cSWOT_T" rows="1" placeholder="外部威胁"></textarea></div>
+</div>
+<div class="tag-row"><span class="tag tag-p2">P2需知晓</span><span class="tag tag-important">重要</span></div>
+
+<!-- 五、经济与渠道 -->
+<div class="section-title">五、经济与渠道 <span style="font-size:9px;color:#A0AEC0;">推荐工具: ICE评分 · BCG矩阵</span></div>
+<div class="grid-3">
+<div>
+<label>定价</label><input id="cPrice" placeholder="如：79-268元/月">
+<label>毛利率</label><select id="cMargin"><option value="<40%">&lt;40%</option><option value="40-50%">40-50%</option><option value="50-60%">50-60%</option><option value="60-70%">60-70%</option><option value=">70%">&gt;70%</option></select>
+</div>
+<div>
+<label>首批投入</label><input id="cInvestment" placeholder="如：30-50万">
+<label>五标归属</label>
+<select id="cLabel"><option value="绿标">🟢绿标(引流4-12元)</option><option value="蓝标">🔵蓝标(功能8-15元)</option><option value="银标">⚪银标(社交12-25元)</option><option value="红标">🔴红标(专业20-40元)</option><option value="金标">🟡金标(旗舰40-80+)</option></select>
+</div>
+<div>
+<label>会议渠道适配</label><select id="cChannel"><option value="高">高——3分钟讲清+可体验</option><option value="中">中——需话术设计</option><option value="低">低——不适合</option></select>
 <label>预计上市</label><input id="cDate" placeholder="如：2026年8月">
-<label>为什么做</label><textarea id="cWhy" rows="3" placeholder="背景和原因"></textarea>
 </div>
 </div>
-<button class="btn btn-g mt" onclick="createEval()">✅ 创建</button>
+<div class="tag-row"><span class="tag tag-p0">P0必须定-定价</span><span class="tag tag-p1">P1需讨论-渠道</span><span class="tag tag-urgent">紧急</span></div>
+
+<!-- 六、叙事与竞争 -->
+<div class="section-title">六、叙事与竞争策略 <span style="font-size:9px;color:#A0AEC0;">推荐工具: Kano模型 · 四象限</span></div>
+<div class="grid-2">
+<div>
+<label>叙事主线</label><textarea id="cNarrative" rows="2" placeholder="如：颠覆认知→自测→恐吓→解法"></textarea>
+<label>情绪曲线</label>
+<select id="cEmotion"><option value="震惊→恐惧→希望">震惊→恐惧→希望</option><option value="焦虑→共情→信任">焦虑→共情→信任</option><option value="心疼→愤怒→行动">心疼→愤怒→行动</option><option value="">其他</option></select>
+</div>
+<div>
+<label>竞争定位</label><textarea id="cPosition" rows="2" placeholder="如：痛苦指数<3的脾养护——不是药/不贵/不麻烦"></textarea>
+<label>对标竞品</label><textarea id="cCompetitor" rows="2" placeholder="如：归脾丸/汤剂/膏方"></textarea>
+<label>核心差异</label><textarea id="cDiff" rows="2" placeholder="差异化在哪"></textarea>
+</div>
+</div>
+<div class="tag-row"><span class="tag tag-p2">P2需知晓</span><span class="tag tag-normal">常规</span></div>
+
+<!-- 七、科研与数据 -->
+<div class="section-title">七、科研与数据支撑</div>
+<div class="grid-3">
+<div><label>科研背书</label><textarea id="cResearch" rows="2" placeholder="如：17年·7篇SCI·3项专利"></textarea></div>
+<div><label>数据来源</label><textarea id="cData" rows="2" placeholder="如：佛山633人/抖音120亿+/WHO"></textarea></div>
+<div><label>证据等级</label><select id="cEvidence"><option value="强">强——有人体RCT+多源验证</option><option value="中">中——体外/动物+调研</option><option value="弱">弱——定性判断</option></select></div>
+</div>
+<div class="tag-row"><span class="tag tag-p2">P2需知晓</span><span class="tag tag-normal">常规</span></div>
+
+<!-- 八、渠道与包装 -->
+<div class="section-title">八、渠道与包装</div>
+<div class="grid-3">
+<div>
+<label>首发渠道</label><select id="cFirstChannel"><option value="会议渠道">会议渠道</option><option value="智能柜">智能柜</option><option value="电商">电商</option><option value="药线">药线</option></select>
+</div>
+<div><label>扩展渠道</label><input id="cExpandChannel" placeholder="如：私域+药线"></div>
+<div><label>包装方向</label><textarea id="cPackaging" rows="1" placeholder="如：条包30袋/精装书盒"></textarea></div>
+</div>
+<div class="tag-row"><span class="tag tag-p1">P1需讨论</span><span class="tag tag-important">重要</span></div>
+
+<!-- 九、法规与风险 -->
+<div class="section-title">九、法规与风险 <span style="font-size:9px;color:#A0AEC0;">推荐工具: MoSCoW法则</span></div>
+<div class="grid-2">
+<div>
+<label>合规路径</label><select id="cCompliance"><option value="普通食品SC">普通食品SC</option><option value="功能食品GB声称">功能食品GB声称</option><option value="保健食品蓝帽子">保健食品蓝帽子</option></select>
+<label>声称空间</label><textarea id="cClaim" rows="2" placeholder="如：可用GB28050营养成分声称"></textarea>
+</div>
+<div>
+<label>主要风险(Must)</label><textarea id="cRisk" rows="2" placeholder="必须解决的风险"></textarea>
+<label>信任信号(Should)</label><textarea id="cTrust" rows="2" placeholder="如：PICC/全配料公开/第三方抽检"></textarea>
+</div>
+</div>
+<div class="tag-row"><span class="tag tag-p0">P0必须定-合规</span><span class="tag tag-p1">P1需讨论-风险</span><span class="tag tag-urgent">紧急</span></div>
+
+<!-- ICE评分 -->
+<div class="section-title">📊 ICE综合评分</div>
+<div class="grid-3">
+<div><label>Impact 影响度</label><select id="iceImpact"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
+<div><label>Confidence 置信度</label><select id="iceConfidence"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
+<div><label>Ease 容易度</label><select id="iceEase"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
+</div>
+<div id="iceScore" style="font-size:12px;font-weight:600;color:#2B6CB0;margin:4px 0;"></div>
+
+<div class="warn">每个板块都标了决策层级标签。收到链接的人一眼就知道什么必须定、什么知道就行、什么还要验证。</div>
+<div class="flex">
+<button class="btn btn-g" onclick="createEval()">✅ 创建并生成链接</button>
 <button class="btn btn-s" onclick="hideCreate()">取消</button>
 </div>
+</div>
 
+<!-- 评估列表 -->
 <div id="evalList"><p style="color:#A0AEC0;font-size:13px;">加载中…</p></div>
 
-<div id="detailPanel" class="card hide">
+<!-- 详情 -->
+<div id="detailPanel" class="card s-hide">
 <div class="flex" style="justify-content:space-between;">
-<h3>📊 详情</h3>
-<button class="btn btn-s" onclick="closeDetail()">✕ 关闭</button>
+<h3>📊 评估详情</h3>
+<button class="btn btn-s" onclick="closeDetail()">✕</button>
 </div>
 <div id="detailContent"></div>
 </div>
 
-<div id="decisionModal" class="card hide mt">
-<h3>🎯 决策</h3>
-<div class="grid">
-<div>
-<label>决策结论</label>
-<select id="decResult"><option value="proceed">✅ 推进</option><option value="pause">⏸️ 暂缓</option><option value="stop">❌ 放弃</option></select>
+<!-- 决策弹窗 -->
+<div id="decisionModal" class="card s-hide mt">
+<h3>🎯 决策 <span style="font-size:10px;color:#A0AEC0;">参考ICE总分和六项基本功评分</span></h3>
+<div class="grid-2">
+<div><label>决策</label><select id="decResult"><option value="proceed">✅ 推进</option><option value="pause">⏸️ 暂缓</option><option value="stop">❌ 放弃</option></select></div>
+<div><label>说明</label><textarea id="decNote" rows="2" placeholder="理由"></textarea></div>
 </div>
-<div>
-<label>决策说明</label>
-<textarea id="decNote" rows="2" placeholder="简单说两句"></textarea>
-</div>
-</div>
-<button class="btn btn-g mt" onclick="submitDecision()">✅ 确认决策</button>
+<button class="btn btn-g mt" onclick="submitDecision()">✅ 确认</button>
 <button class="btn btn-s" onclick="closeDecision()">取消</button>
 </div>
 
 <script>
-// 用唯一变量名避免与浏览器扩展冲突
 if(typeof __gsDB === 'undefined'){
  var __gsURL = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
  var __gsKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : '';
  var __gsDB = supabase.createClient(__gsURL, __gsKey);
+ var __autoShow = false;
 
  function genId(){ return 'eval_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-
  function copyText(t){
-  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){alert('✅ 已复制')})['catch'](function(){prompt('复制这个链接：',t)});
-  else prompt('复制这个链接：',t);
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(function(){alert('✅ 已复制')})['catch'](function(){prompt('复制：',t)});
+  else prompt('复制：',t);
  }
+ function showCreate(){ document.getElementById('createForm').classList.remove('s-hide'); }
+ function hideCreate(){ document.getElementById('createForm').classList.add('s-hide'); calcICE(); }
+ function getVal(id){ var el=document.getElementById(id); return el?el.value.trim():''; }
+ function showTools(){ document.getElementById('toolsPanel').classList.remove('s-hide'); }
+ function closeTools(){ document.getElementById('toolsPanel').classList.add('s-hide'); }
 
- function showCreate(){ document.getElementById('createForm').classList.remove('hide'); }
- function hideCreate(){ document.getElementById('createForm').classList.add('hide'); }
+ // ICE评分计算
+ function calcICE(){
+  var i=parseInt(getVal('iceImpact'))||0, c=parseInt(getVal('iceConfidence'))||0, e=parseInt(getVal('iceEase'))||0;
+  var total = i+c+e;
+  document.getElementById('iceScore').textContent = total>0 ? 'ICE总分：'+total+'/30（影响'+i+'·置信'+c+'·容易'+e+'）' : '';
+ }
+ document.querySelectorAll('#iceImpact,#iceConfidence,#iceEase').forEach(function(el){el.onchange=calcICE;});
 
  function createEval(){
-  var name = document.getElementById('cName').value.trim();
+  var name = getVal('cName');
   if(!name){ alert('请填产品名称'); return; }
   var id = genId();
-  __gsDB.from('evaluations').insert({
-   id: id, name: name,
-   desc_text: document.getElementById('cDesc').value.trim(),
-   price: document.getElementById('cPrice').value.trim(),
-   launch_date: document.getElementById('cDate').value.trim(),
-   why_text: document.getElementById('cWhy').value.trim(),
-   step: 0, status: 'draft', created_by: '管理员'
-  }).then(function(res){
+  var fullDesc = [
+    '【产品名称】'+name,'【方案类别】'+getVal('cType'),'【品牌线】'+getVal('cBrand'),'【产品形态】'+getVal('cForm'),
+    '【核心卖点】'+getVal('cDesc'),'【目标用户】'+getVal('cUser'),'【核心痛点】'+getVal('cPain'),
+    '【使用场景】'+getVal('cScene'),'【用户认知】'+getVal('cCognition'),'【技术阶段】'+getVal('cTech'),
+    '【核心壁垒】'+getVal('cBarrier'),'【口感评分】'+getVal('cTaste'),'【市场规模】'+getVal('cMarket'),
+    '【核心区域】'+getVal('cRegion'),'【定位】'+getVal('cPosition'),'【竞品】'+getVal('cCompetitor'),
+    '【差异】'+getVal('cDiff'),'【定价】'+getVal('cPrice'),'【毛利率】'+getVal('cMargin'),
+    '【首批投入】'+getVal('cInvestment'),'【预计上市】'+getVal('cDate'),
+    '【叙事】'+getVal('cNarrative'),'【情绪曲线】'+getVal('cEmotion'),
+    '【科研】'+getVal('cResearch'),'【数据】'+getVal('cData'),'【证据】'+getVal('cEvidence'),
+    '【首发渠道】'+getVal('cFirstChannel'),'【扩展渠道】'+getVal('cExpandChannel'),
+    '【包装】'+getVal('cPackaging'),'【五标】'+getVal('cLabel'),'【会议渠道】'+getVal('cChannel'),
+    '【合规】'+getVal('cCompliance'),'【声称】'+getVal('cClaim'),'【风险】'+getVal('cRisk'),'【信任】'+getVal('cTrust'),
+    '【SWOT_S】'+getVal('cSWOT_S'),'【SWOT_W】'+getVal('cSWOT_W'),'【SWOT_O】'+getVal('cSWOT_O'),'【SWOT_T】'+getVal('cSWOT_T'),
+    '【ICE】'+getVal('iceImpact')+'/'+getVal('iceConfidence')+'/'+getVal('iceEase'),
+    '【基本功-亮点】'+getVal('scoreLight'),'【基本功-洞察】'+getVal('scoreInsight'),
+    '【基本功-效率】'+getVal('scoreEfficiency'),'【基本功-成本】'+getVal('scoreCost'),
+    '【基本功-数据】'+getVal('scoreData'),'【基本功-风险】'+getVal('scoreRisk')
+  ].join('\n');
+
+  __gsDB.from('evaluations').insert({id:id,name:name,desc_text:fullDesc,step:0,status:'draft',created_by:'管理员'}).then(function(res){
    if(res.error){ alert('创建失败：'+res.error.message); return; }
-   var base = window.location.origin + window.location.pathname.replace(/index\.html$/,'');
-   var url = base + 'eval.html?id=' + id;
-   alert('✅ 创建成功！\n\n邀请链接：'+url);
+   var url = window.location.origin + window.location.pathname.replace(/index\.html$/,'') + 'eval.html?id=' + id;
+   alert('✅ 创建成功！\n链接已复制。');
    copyText(url);
-   ['cName','cDesc','cPrice','cDate','cWhy'].forEach(function(id){document.getElementById(id).value='';});
-   hideCreate();
-   loadList();
+   hideCreate(); loadList();
   });
  }
 
  function loadList(){
-  document.getElementById('evalList').innerHTML = '<p style="color:#A0AEC0;font-size:13px;">加载中…</p>';
+  document.getElementById('evalList').innerHTML = '<p style="color:#A0AEC0;">加载中…</p>';
   __gsDB.from('evaluations').select('*').order('created_at',{ascending:false}).then(function(res){
    var data = res.data, error = res.error;
-   if(error){ document.getElementById('evalList').innerHTML = '<p style="color:red;">加载失败：'+error.message+'</p>'; return; }
-   if(!data||data.length===0){
-    document.getElementById('evalList').innerHTML = '<div class="card"><p style="color:#A0AEC0;text-align:center;">还没有评估，点「新建评估」开始</p></div>';
-    return;
-   }
+   if(error){ document.getElementById('evalList').innerHTML = '<p style="color:red;">加载失败:'+error.message+'</p>'; return; }
+   if(!data||!data.length){ document.getElementById('evalList').innerHTML = '<div class="card"><p style="text-align:center;color:#A0AEC0;">还没有评估</p></div>'; return; }
    var h = '';
-   var promises = data.map(function(e){
-    return __gsDB.from('participants').select('*',{count:'exact',head:true}).eq('eval_id',e.id).then(function(r){
-     var total = r.count||0;
-     return __gsDB.from('participants').select('*',{count:'exact',head:true}).eq('eval_id',e.id).eq('filled',true).then(function(r2){
-      var filled = r2.count||0;
-      var sMap = {draft:'<span class="status s-draft">📝 草稿</span>',active:'<span class="status s-active">▶ 进行中</span>',done:'<span class="status s-done">✅ 完成</span>'};
-      var steps = ['准备','邀请','问卷','汇总','决策'].map(function(n,i){
-       var cls = i<e.step?'dot-done':i===e.step?'dot-cur':'dot-wait';
-       return '<span class="dot '+cls+'" title="'+n+'">'+(i+1)+'</span>';
-      }).join('');
-      var base = window.location.origin + window.location.pathname.replace(/index\.html$/,'');
-      var link = base + 'eval.html?id=' + e.id;
-      h += '<div class="card"><div class="flex" style="justify-content:space-between;">' +
-       '<div><h3>'+e.name+'</h3>'+sMap[e.status||'draft']+'</div>' +
-       '<div class="meta">'+(e.desc_text||'')+'</div></div>' +
-       '<div class="step-dots">'+steps+'</div>' +
-       '<div class="meta">📊 '+total+'人受邀 · '+filled+'人已填</div>' +
-       '<div class="flex">' +
-       '<button class="btn btn-s" onclick="copyText(\''+link+'\')">🔗 复制链接</button>' +
-       '<button class="btn btn-s" onclick="showDetail(\''+e.id+'\')">📖 详情</button>' +
-       (e.step<4?'<button class="btn btn-b" onclick="nextStep(\''+e.id+'\',\''+e.name+'\')">➡️ 下一步</button>':'') +
-       (e.step>=4?'<button class="btn btn-o" onclick="showDecision(\''+e.id+'\')">🎯 决策</button>':'') +
-       '<button class="btn btn-r" onclick="deleteEval(\''+e.id+'\')">🗑️</button></div></div>';
-     });
-    });
+   data.forEach(function(e){
+    // 从desc_text提取ICE和基本功评分
+    var iceMatch = e.desc_text?e.desc_text.match(/【ICE】(\d+)\/(\d+)\/(\d+)/):null;
+    var iceTotal = iceMatch ? (parseInt(iceMatch[1])+parseInt(iceMatch[2])+parseInt(iceMatch[3])) : 0;
+    var lightMatch = e.desc_text?e.desc_text.match(/【基本功-亮点】(\d)/):null;
+    var lightScore = lightMatch?parseInt(lightMatch[1]):0;
+    h += '<div class="card"><div class="flex" style="justify-content:space-between;">'+
+     '<h3>'+e.name+'</h3><span class="meta">ICE:'+iceTotal+'/30</span></div>'+
+     (lightScore?'<div class="meta">⭐亮点 '+lightScore+'分 · 数据 '+((e.desc_text||'').match(/【基本功-数据】(\d)/)||['',''])[1]+'分 · 风险 '+((e.desc_text||'').match(/【基本功-风险】(\d)/)||['',''])[1]+'分</div>':'')+
+     '<div class="flex"><button class="btn btn-s" onclick="showDetail(\''+e.id+'\')">📖</button>'+
+     '<button class="btn btn-s" onclick="copyEvalLink(\''+e.id+'\')">🔗</button>'+
+     (e.step<4?'<button class="btn btn-b" onclick="nextStep(\''+e.id+'\')">➡️</button>':'')+
+     (e.step>=4?'<button class="btn btn-o" onclick="showDecision(\''+e.id+'\')">🎯</button>':'')+
+     '<button class="btn btn-r" onclick="deleteEval(\''+e.id+'\')">🗑️</button></div></div>';
    });
-   Promise.all(promises).then(function(){ document.getElementById('evalList').innerHTML = h; });
+   document.getElementById('evalList').innerHTML = h;
   });
  }
+
+ function copyEvalLink(eid){ copyText(window.location.origin+window.location.pathname.replace(/index\.html$/,'')+'eval.html?id='+eid); }
 
  function showDetail(eid){
   __gsDB.from('participants').select('*').eq('eval_id',eid).then(function(rp){
    __gsDB.from('decisions').select('*').eq('eval_id',eid).single().then(function(rd){
-    var parts = rp.data, dec = rd.data;
-    var h = '<table><tr><th>发言人</th><th>部门</th><th>问题一</th><th>问题二</th><th>问题三</th></tr>';
-    if(parts&&parts.length>0){
-     parts.forEach(function(p){h+='<tr><td>'+p.name+'</td><td>'+(p.department||'-')+'</td><td>'+(p.q1||'-')+'</td><td>'+(p.q2||'-')+'</td><td>'+(p.q3||'-')+'</td></tr>';});
-    }
-    h += '</table><p style="font-size:11px;color:#A0AEC0;">共 '+(parts?parts.length:0)+' 人</p>';
-    if(dec&&dec.result){h+='<div class="hr"></div><p><strong>决策：</strong>'+(dec.result==='proceed'?'✅ 推进':dec.result==='pause'?'⏸️ 暂缓':'❌ 放弃')+' · '+(dec.note||'')+'</p>';}
-    document.getElementById('detailContent').innerHTML = h;
-    document.getElementById('detailPanel').classList.remove('hide');
+    var parts=rp.data,dec=rd.data;
+    var h='<table><tr><th>发言人</th><th>部门</th><th>Q1</th><th>Q2</th><th>Q3</th></tr>';
+    if(parts&&parts.length) parts.forEach(function(p){h+='<tr><td>'+p.name+'</td><td>'+(p.department||'-')+'</td><td>'+(p.q1||'-')+'</td><td>'+(p.q2||'-')+'</td><td>'+(p.q3||'-')+'</td></tr>';});
+    h+='</table><p style="font-size:10px;color:#A0AEC0;">共'+(parts?parts.length:0)+'人</p>';
+    if(dec&&dec.result){h+='<div class="hr"></div><p><strong>决策：</strong>'+(dec.result==='proceed'?'✅推进':dec.result==='pause'?'⏸️暂缓':'❌放弃')+'</p>';}
+    document.getElementById('detailContent').innerHTML=h; document.getElementById('detailPanel').classList.remove('s-hide');
    });
   });
  }
- function closeDetail(){ document.getElementById('detailPanel').classList.add('hide'); }
+ function closeDetail(){ document.getElementById('detailPanel').classList.add('s-hide'); }
+ function nextStep(eid){ var n=prompt('输入yes确认：'); if(n!=='yes')return; __gsDB.from('evaluations').select('step').eq('id',eid).then(function(r){var ns=(r.data[0].step||0)+1;__gsDB.from('evaluations').update({step:ns,status:ns>=5?'done':'active'}).eq('id',eid).then(function(){loadList();});}); }
+ function showDecision(eid){ document.getElementById('decisionModal').classList.remove('s-hide'); document.getElementById('decisionModal').dataset.eid=eid; }
+ function closeDecision(){ document.getElementById('decisionModal').classList.add('s-hide'); }
+ function submitDecision(){ var eid=document.getElementById('decisionModal').dataset.eid;__gsDB.from('decisions').insert({eval_id:eid,result:getVal('decResult'),note:getVal('decNote'),made_by:'管理员'}).then(function(){__gsDB.from('evaluations').update({status:'done'}).eq('id',eid).then(function(){closeDecision();loadList();alert('✅决策已记录');});}); }
+ function deleteEval(eid){ if(!confirm('确定删除？'))return;__gsDB.from('participants').delete().eq('eval_id',eid).then(function(){__gsDB.from('decisions').delete().eq('eval_id',eid).then(function(){__gsDB.from('evaluations').delete().eq('id',eid).then(function(){loadList();});});}); }
 
- function nextStep(eid,name){
-  var next = prompt('「'+name+'」已完成？输入 yes 确认：');
-  if(next!=='yes') return;
-  __gsDB.from('evaluations').select('step').eq('id',eid).then(function(r){
-   var ns = (r.data[0].step||0)+1;
-   __gsDB.from('evaluations').update({step:ns,status:ns>=5?'done':'active'}).eq('id',eid).then(function(){loadList();});
-  });
- }
-
- function showDecision(eid){
-  document.getElementById('decisionModal').classList.remove('hide');
-  document.getElementById('decisionModal').dataset.eid = eid;
- }
- function closeDecision(){ document.getElementById('decisionModal').classList.add('hide'); }
-
- function submitDecision(){
-  var eid = document.getElementById('decisionModal').dataset.eid;
-  var result = document.getElementById('decResult').value;
-  var note = document.getElementById('decNote').value;
-  __gsDB.from('decisions').insert({eval_id:eid,result:result,note:note,made_by:'管理员'}).then(function(){
-   __gsDB.from('evaluations').update({status:'done'}).eq('id',eid).then(function(){
-    closeDecision(); loadList(); alert('✅ 决策已记录');
-   });
-  });
- }
-
- function deleteEval(eid){
-  if(!confirm('确定删除？')) return;
-  __gsDB.from('participants').delete().eq('eval_id',eid).then(function(){
-   __gsDB.from('decisions').delete().eq('eval_id',eid).then(function(){
-    __gsDB.from('evaluations').delete().eq('id',eid).then(function(){loadList();});
-   });
-  });
- }
+ // URL参数自动填表
+ (function(){
+  var p=new URLSearchParams(window.location.search);
+  var map={name:'cName',desc:'cDesc',price:'cPrice',date:'cDate',type:'cType',brand:'cBrand',form:'cForm',user:'cUser',pain:'cPain',scene:'cScene',tech:'cTech',barrier:'cBarrier',taste:'cTaste',market:'cMarket',region:'cRegion',position:'cPosition',competitor:'cCompetitor',diff:'cDiff',margin:'cMargin',investment:'cInvestment',label:'cLabel',channel:'cChannel',risk:'cRisk',cognition:'cCognition',narrative:'cNarrative',emotion:'cEmotion',research:'cResearch',data:'cData',evidence:'cEvidence',firstCh:'cFirstChannel',expandCh:'cExpandChannel',packaging:'cPackaging',compliance:'cCompliance',claim:'cClaim',trust:'cTrust',narrativeStrategy:'cNarrativeStrategy',swots:'cSWOT_S',swotw:'cSWOT_W',swoto:'cSWOT_O',swott:'cSWOT_T',icei:'iceImpact',icec:'iceConfidence',icee:'iceEase',slight:'scoreLight',sinsight:'scoreInsight',seff:'scoreEfficiency',scost:'scoreCost',sdata:'scoreData',srisk:'scoreRisk'};
+  for(var k in map){var v=p.get(k);if(v)document.getElementById(map[k]).value=v;}
+  if(p.get('name')&&p.get('auto')=='1'){showCreate();calcICE();}
+ })();
 
  loadList();
- // 检查URL参数自动填表
- (function(){
-  var p = new URLSearchParams(window.location.search);
-  if(p.get('name')) document.getElementById('cName').value = p.get('name');
-  if(p.get('desc')) document.getElementById('cDesc').value = p.get('desc');
-  if(p.get('price')) document.getElementById('cPrice').value = p.get('price');
-  if(p.get('date')) document.getElementById('cDate').value = p.get('date');
-  if(p.get('why')) document.getElementById('cWhy').value = p.get('why');
-  if(p.get('name') && p.get('auto')=='1') showCreate();
- })();
 }
 </script>
 </body>
