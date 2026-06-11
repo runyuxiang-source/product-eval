@@ -13,9 +13,33 @@ h1{font-size:18px;}.sub{font-size:12px;color:#4A5568;margin-bottom:12px;}
 .meta{font-size:11px;color:#A0AEC0;margin:2px 0;}
 .s-hide{display:none!important;}.mt{margin-top:8px;}.mb{margin-bottom:8px;}.hr{border:none;border-top:1px solid #E2E8F0;margin:12px 0;}
 .flex{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.flex-1{flex:1;min-width:200px;}
-label{display:block;font-size:11px;color:#4A5568;margin:5px 0 2px;font-weight:600;}
-input,textarea,select{width:100%;padding:6px 9px;border:1px solid #E2E8F0;border-radius:5px;font-size:12px;font-family:inherit;}
+/* 色块分区系统 */
+.section-block{border-radius:10px;padding:14px 14px 10px;margin-bottom:12px;}
+.sb-1{background:#EBF4FF;border-left:4px solid #2B6CB0;}
+.sb-2{background:#E6FFFA;border-left:4px solid #38A169;}
+.sb-3{background:#F3E8FF;border-left:4px solid #805AD5;}
+.sb-4{background:#FFFAF0;border-left:4px solid #DD6B20;}
+.sb-5{background:#FFFFF0;border-left:4px solid #D69E2E;}
+.sb-6{background:#E6FFFE;border-left:4px solid #319795;}
+.sb-7{background:#EBF8FF;border-left:4px solid #3182CE;}
+.sb-8{background:#FFF5F5;border-left:4px solid #D53F8C;}
+.sb-9{background:#FFF5F5;border-left:4px solid #E53E3E;}
+.sb-tool{background:#F7FAFC;border-left:4px solid #718096;}
+.section-title{font-size:14px;font-weight:700;color:#1A202C;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.section-title .num{display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0;}
+.sb-1 .section-title .num{background:#2B6CB0;}
+.sb-2 .section-title .num{background:#38A169;}
+.sb-3 .section-title .num{background:#805AD5;}
+.sb-4 .section-title .num{background:#DD6B20;}
+.sb-5 .section-title .num{background:#D69E2E;}
+.sb-6 .section-title .num{background:#319795;}
+.sb-7 .section-title .num{background:#3182CE;}
+.sb-8 .section-title .num{background:#D53F8C;}
+.sb-9 .section-title .num{background:#E53E3E;}
+.sb-tool .section-title .num{background:#718096;}
+.section-title .tool-tip{font-size:10px;color:#A0AEC0;font-weight:400;margin-left:auto;}
+label{display:block;font-size:12px;color:#4A5568;margin:5px 0 2px;font-weight:600;}
+input,textarea,select{width:100%;padding:7px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;}
 textarea{resize:vertical;min-height:40px;}
 input:focus,textarea:focus{outline:none;border-color:#2B6CB0;box-shadow:0 0 0 2px rgba(43,108,176,0.1);}
 .btn{padding:6px 18px;border:none;border-radius:5px;font-size:12px;cursor:pointer;margin:2px;}
@@ -119,12 +143,11 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 <div class="m-cell" style="background:#B794F4;color:#fff;">★☆ 排期</div>
 <div class="m-cell" style="background:#CBD5E0;color:#4A5568;">有空验</div>
 </div>
-</div>
 
-<!-- ===== 六项基本功评分（放在表单顶部） ===== -->
-<div class="section-title">📊 六项基本功评分</div>
-<div style="font-size:10px;color:#4A5568;margin-bottom:6px;">每个维度1-5分，评估这个提案的综合质量</div>
-<div class="grid-3">
+<!-- ===== 六项基本功评分 ===== -->
+<div class="section-block sb-tool">
+<div class="section-title"><span class="num">⭐</span>六项基本功评分 <span class="tool-tip">每项1-5分，评估提案综合质量</span></div>
+<div class="grid-3" style="margin-bottom:4px;">
 <div><label>✨ 提案亮点</label><select id="scoreLight"><option value="">--</option><option value="1">1 平淡</option><option value="2">2 一般</option><option value="3">3 不错</option><option value="4">4 亮眼</option><option value="5">5 惊艳</option></select></div>
 <div><label>🔍 需求洞察</label><select id="scoreInsight"><option value="">--</option><option value="1">1 拍脑袋</option><option value="2">2 有方向</option><option value="3">3 有数据</option><option value="4">4 有深度</option><option value="5">5 一针见血</option></select></div>
 <div><label>⚡ 开发效率</label><select id="scoreEfficiency"><option value="">--</option><option value="1">1 慢/不清</option><option value="2">2 有方向</option><option value="3">3 可接受</option><option value="4">4 高效率</option><option value="5">5 极速</option></select></div>
@@ -132,13 +155,14 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 <div><label>📈 数据支撑</label><select id="scoreData"><option value="">--</option><option value="1">1 纯口号</option><option value="2">2 有引用</option><option value="3">3 有数据</option><option value="4">4 多源验证</option><option value="5">5 全面严谨</option></select></div>
 <div><label>⚠️ 风险预判</label><select id="scoreRisk"><option value="">--</option><option value="1">1 只讲好话</option><option value="2">2 提了但不深</option><option value="3">3 有分析</option><option value="4">4 有方案</option><option value="5">5 全面覆盖</option></select></div>
 </div>
-
+<div id="toolRecommend" style="font-size:10px;color:#4A5568;margin:4px 0;"></div>
 <!-- 专业工具推荐（根据评分自动生成） -->
 <div id="toolRecommend" style="font-size:10px;color:#4A5568;margin:4px 0;"></div>
+</div>
 
-<!-- ===== 表单主体（9大板块） ===== -->
 <!-- 一、产品基础 -->
-<div class="section-title">一、产品基础信息</div>
+<div class="section-block sb-1">
+<div class="section-title"><span class="num">一</span>产品基础信息</div>
 <div class="grid-2">
 <div>
 <label>产品名称 *</label><input id="cName" placeholder="如：益生菌运化膏">
@@ -154,9 +178,12 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 </div>
 </div>
 <div class="tag-row"><span class="tag tag-p0">P0必须定</span><span class="tag tag-urgent">紧急</span></div>
+</div>
 
 <!-- 二、用户与场景 -->
-<div class="section-title">二、目标用户与场景</div>
+</div>
+<div class="section-block sb-2">
+<div class="section-title"><span class="num">二</span>目标用户与场景</div>
 <div class="grid-2">
 <div>
 <label>目标用户</label><textarea id="cUser" rows="2" placeholder="如：45-55岁女性，关注记忆力下降"></textarea>
@@ -169,9 +196,12 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 </div>
 </div>
 <div class="tag-row"><span class="tag tag-p2">P2需知晓</span><span class="tag tag-normal">常规</span></div>
+</div>
 
 <!-- 三、技术与配方 -->
-<div class="section-title">三、技术与配方</div>
+</div>
+<div class="section-block sb-3">
+<div class="section-title"><span class="num">三</span>技术与配方 <span class="tool-tip">推荐: TRL技术成熟度</span></div>
 <div class="grid-3">
 <div>
 <label>配方成熟度</label>
@@ -183,7 +213,9 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 <div class="tag-row"><span class="tag tag-p0">P0必须定</span><span class="tag tag-important">重要</span><span class="tag tag-p4">验证-口感</span></div>
 
 <!-- 四、市场与竞争 -->
-<div class="section-title">四、市场与竞争 <span style="font-size:9px;color:#A0AEC0;">推荐工具: SWOT · 波特五力</span></div>
+</div>
+<div class="section-block sb-4">
+<div class="section-title"><span class="num">四</span>市场与竞争 <span class="tool-tip">工具: SWOT · 波特五力</span></div>
 <div class="grid-2">
 <div><label>市场规模</label><select id="cMarket"><option value="<1亿">&lt;1亿</option><option value="1-10亿">1-10亿</option><option value="10-50亿">10-50亿</option><option value=">50亿">&gt;50亿</option></select></div>
 <div><label>核心区域</label><input id="cRegion" placeholder="如：山东/河北/浙江/广东"></div>
@@ -195,9 +227,12 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 <div><label>SWOT-威胁</label><textarea id="cSWOT_T" rows="1" placeholder="外部威胁"></textarea></div>
 </div>
 <div class="tag-row"><span class="tag tag-p2">P2需知晓</span><span class="tag tag-important">重要</span></div>
+</div>
 
 <!-- 五、经济与渠道 -->
-<div class="section-title">五、经济与渠道 <span style="font-size:9px;color:#A0AEC0;">推荐工具: ICE评分 · BCG矩阵</span></div>
+</div>
+<div class="section-block sb-5">
+<div class="section-title"><span class="num">五</span>经济与渠道 <span class="tool-tip">工具: ICE · BCG</span></div>
 <div class="grid-3">
 <div>
 <label>定价</label><input id="cPrice" placeholder="如：79-268元/月">
@@ -214,9 +249,12 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 </div>
 </div>
 <div class="tag-row"><span class="tag tag-p0">P0必须定-定价</span><span class="tag tag-p1">P1需讨论-渠道</span><span class="tag tag-urgent">紧急</span></div>
+</div>
 
 <!-- 六、叙事与竞争 -->
-<div class="section-title">六、叙事与竞争策略 <span style="font-size:9px;color:#A0AEC0;">推荐工具: Kano模型 · 四象限</span></div>
+</div>
+<div class="section-block sb-6">
+<div class="section-title"><span class="num">六</span>叙事与竞争策略 <span class="tool-tip">工具: Kano · 四象限</span></div>
 <div class="grid-2">
 <div>
 <label>叙事主线</label><textarea id="cNarrative" rows="2" placeholder="如：颠覆认知→自测→恐吓→解法"></textarea>
@@ -230,18 +268,24 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 </div>
 </div>
 <div class="tag-row"><span class="tag tag-p2">P2需知晓</span><span class="tag tag-normal">常规</span></div>
+</div>
 
 <!-- 七、科研与数据 -->
-<div class="section-title">七、科研与数据支撑</div>
+</div>
+<div class="section-block sb-7">
+<div class="section-title"><span class="num">七</span>科研与数据支撑</div>
 <div class="grid-3">
 <div><label>科研背书</label><textarea id="cResearch" rows="2" placeholder="如：17年·7篇SCI·3项专利"></textarea></div>
 <div><label>数据来源</label><textarea id="cData" rows="2" placeholder="如：佛山633人/抖音120亿+/WHO"></textarea></div>
 <div><label>证据等级</label><select id="cEvidence"><option value="强">强——有人体RCT+多源验证</option><option value="中">中——体外/动物+调研</option><option value="弱">弱——定性判断</option></select></div>
 </div>
 <div class="tag-row"><span class="tag tag-p2">P2需知晓</span><span class="tag tag-normal">常规</span></div>
+</div>
 
 <!-- 八、渠道与包装 -->
-<div class="section-title">八、渠道与包装</div>
+</div>
+<div class="section-block sb-8">
+<div class="section-title"><span class="num">八</span>渠道与包装策略</div>
 <div class="grid-3">
 <div>
 <label>首发渠道</label><select id="cFirstChannel"><option value="会议渠道">会议渠道</option><option value="智能柜">智能柜</option><option value="电商">电商</option><option value="药线">药线</option></select>
@@ -250,9 +294,12 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 <div><label>包装方向</label><textarea id="cPackaging" rows="1" placeholder="如：条包30袋/精装书盒"></textarea></div>
 </div>
 <div class="tag-row"><span class="tag tag-p1">P1需讨论</span><span class="tag tag-important">重要</span></div>
+</div>
 
 <!-- 九、法规与风险 -->
-<div class="section-title">九、法规与风险 <span style="font-size:9px;color:#A0AEC0;">推荐工具: MoSCoW法则</span></div>
+</div>
+<div class="section-block sb-9">
+<div class="section-title"><span class="num">九</span>法规与风险 <span class="tool-tip">工具: MoSCoW</span></div>
 <div class="grid-2">
 <div>
 <label>合规路径</label><select id="cCompliance"><option value="普通食品SC">普通食品SC</option><option value="功能食品GB声称">功能食品GB声称</option><option value="保健食品蓝帽子">保健食品蓝帽子</option></select>
@@ -264,15 +311,18 @@ td{padding:2px 6px;border-bottom:1px solid #E2E8F0;color:#4A5568;font-size:11px;
 </div>
 </div>
 <div class="tag-row"><span class="tag tag-p0">P0必须定-合规</span><span class="tag tag-p1">P1需讨论-风险</span><span class="tag tag-urgent">紧急</span></div>
+</div>
 
 <!-- ICE评分 -->
-<div class="section-title">📊 ICE综合评分</div>
+<div class="section-block sb-tool">
+<div class="section-title"><span class="num">📊</span>ICE综合评分 <span class="tool-tip">影响/置信/容易 各1-10分</span></div>
 <div class="grid-3">
 <div><label>Impact 影响度</label><select id="iceImpact"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
 <div><label>Confidence 置信度</label><select id="iceConfidence"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
 <div><label>Ease 容易度</label><select id="iceEase"><option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select></div>
 </div>
 <div id="iceScore" style="font-size:12px;font-weight:600;color:#2B6CB0;margin:4px 0;"></div>
+</div>
 
 <div class="warn">每个板块都标了决策层级标签。收到链接的人一眼就知道什么必须定、什么知道就行、什么还要验证。</div>
 <div class="flex">
