@@ -2,74 +2,161 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>焦点小组评估</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>焦点小组 · 评估问卷</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Microsoft YaHei','PingFang SC',sans-serif;}
-body{background:#F0F4F8;color:#1A202C;padding:16px;min-height:100vh;display:flex;align-items:center;justify-content:center;}
-.card{background:#fff;border-radius:10px;padding:24px;border:1px solid #E2E8F0;width:100%;max-width:640px;box-shadow:0 2px 12px rgba(0,0,0,0.04);}
-h1{font-size:20px;color:#2B6CB0;margin-bottom:4px;}
-.sub{font-size:13px;color:#4A5568;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #E2E8F0;}
-.info{background:#EBF4FF;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#2B6CB0;line-height:1.6;}
-.q{font-size:14px;font-weight:600;color:#1A202C;margin:14px 0 4px;}
-.q-num{display:inline-flex;background:#2B6CB0;color:#fff;width:22px;height:22px;border-radius:50%;align-items:center;justify-content:center;font-size:11px;margin-right:6px;flex-shrink:0;}
-.q-wrap{display:flex;align-items:flex-start;gap:6px;}
-textarea{width:100%;padding:8px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;resize:vertical;min-height:60px;font-family:inherit;}
-textarea:focus{outline:none;border-color:#2B6CB0;box-shadow:0 0 0 2px rgba(43,108,176,0.1);}
-label{font-size:12px;color:#4A5568;margin:10px 0 2px;font-weight:600;display:block;}
-input,select{width:100%;padding:7px 10px;border:1px solid #E2E8F0;border-radius:6px;font-size:13px;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-@media(max-width:480px){.g2{grid-template-columns:1fr;}}
-.btn{padding:10px 28px;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin:12px 0 4px;width:100%;}
-.btn-b{background:#2B6CB0;color:#fff;}
-.btn-s{background:#EDF2F7;color:#4A5568;}
-.thanks{text-align:center;padding:48px 20px;}
-.thanks h2{font-size:24px;color:#38A169;margin-bottom:8px;}
-.thanks p{color:#4A5568;line-height:1.6;}
-.hide{display:none;}
-.err{color:#E53E3E;font-size:12px;}
-.foot{text-align:center;font-size:11px;color:#A0AEC0;margin-top:16px;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Microsoft YaHei','PingFang SC',-apple-system,sans-serif;}
+body{background:linear-gradient(135deg,#F0F4F8 0%,#E8EEF6 100%);min-height:100vh;padding:16px;display:flex;align-items:center;justify-content:center;}
+.card{background:#fff;border-radius:16px;padding:28px 24px;width:100%;max-width:680px;box-shadow:0 4px 24px rgba(0,0,0,0.06);border:1px solid rgba(226,232,240,0.6);}
+/* 加载 */
+.loading{text-align:center;padding:60px 20px;}
+.loading .spinner{width:40px;height:40px;border:3px solid #E2E8F0;border-top-color:#2B6CB0;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* 头部 */
+.header{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.header .icon{width:40px;height:40px;background:linear-gradient(135deg,#2B6CB0,#3182CE);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0;}
+.header h1{font-size:20px;color:#1A202C;font-weight:700;}
+.badge{display:inline-block;background:#EBF4FF;color:#2B6CB0;font-size:10px;padding:2px 10px;border-radius:10px;margin:4px 0 8px;}
+.sub{font-size:13px;color:#4A5568;margin-bottom:12px;line-height:1.6;}
+/* 提案信息 */
+.proposal-box{background:#F7FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:14px;margin-bottom:16px;max-height:380px;overflow-y:auto;}
+.proposal-box .field{font-size:12px;line-height:1.8;color:#4A5568;}
+.proposal-box .field strong{color:#2B6CB0;}
+/* 进度条 */
+.progress{display:flex;gap:6px;margin-bottom:16px;align-items:center;}
+.prog-step{flex:1;height:4px;border-radius:2px;background:#E2E8F0;transition:all 0.3s;}
+.prog-step.done{background:#38A169;}
+.prog-step.active{background:#2B6CB0;height:6px;}
+.prog-label{font-size:10px;color:#A0AEC0;text-align:center;}
+/* 输入区 */
+.form-section{animation:fadeIn 0.4s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#1A202C;margin-bottom:4px;}
+.form-group label .num{display:inline-flex;width:22px;height:22px;background:#2B6CB0;color:#fff;border-radius:50%;align-items:center;justify-content:center;font-size:11px;margin-right:6px;flex-shrink:0;}
+.form-group .hint{font-size:11px;color:#A0AEC0;margin-bottom:4px;}
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.input-row{grid-template-columns:1fr;}}
+input,select,textarea{width:100%;padding:10px 12px;border:2px solid #E2E8F0;border-radius:10px;font-size:14px;font-family:inherit;transition:border-color 0.2s;background:#fff;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#2B6CB0;box-shadow:0 0 0 3px rgba(43,108,176,0.08);}
+textarea{resize:vertical;min-height:70px;line-height:1.6;}
+.char-count{text-align:right;font-size:10px;color:#A0AEC0;margin-top:2px;}
+/* 提交按钮 */
+.submit-btn{width:100%;padding:14px;background:linear-gradient(135deg,#2B6CB0,#3182CE);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.submit-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(43,108,176,0.25);}
+.submit-btn:active{transform:translateY(0);}
+.submit-btn:disabled{background:#CBD5E0;cursor:not-allowed;transform:none;box-shadow:none;}
+.err{color:#E53E3E;font-size:12px;margin:4px 0;min-height:18px;}
+/* 感谢页 */
+.thanks-page{text-align:center;padding:48px 20px;}
+.thanks-icon{width:64px;height:64px;background:#C6F6D5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;animation:pop 0.5s ease;}
+@keyframes pop{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.thanks-page h2{font-size:22px;color:#276749;margin-bottom:6px;}
+.thanks-page p{color:#4A5568;line-height:1.7;font-size:14px;}
+.thanks-foot{font-size:12px;color:#A0AEC0;margin-top:20px;border-top:1px solid #E2E8F0;padding-top:16px;}
+/* 情绪选择 */
+.mood-row{display:flex;gap:8px;flex-wrap:wrap;}
+.mood-btn{padding:8px 14px;border:2px solid #E2E8F0;border-radius:10px;font-size:13px;cursor:pointer;background:#fff;transition:all 0.15s;flex:1;min-width:60px;text-align:center;}
+.mood-btn:hover{border-color:#2B6CB0;background:#EBF4FF;}
+.mood-btn.selected{border-color:#2B6CB0;background:#2B6CB0;color:#fff;}
 </style>
 </head>
 <body>
-
-<div class="card" id="loading"><p style="text-align:center;color:#A0AEC0;">⏳ 加载中…</p></div>
-
-<div id="survey" class="card hide">
-<div id="productInfo"></div>
-<label>你的姓名</label>
-<input id="userName" placeholder="如：张经理">
-<label>你的部门</label>
-<select id="userDept">
-<option value="">请选择</option>
-<option value="产品部">产品部</option>
-<option value="生产部">生产部</option>
-<option value="财务中心">财务中心</option>
-<option value="市场部-大区">市场部-大区</option>
-<option value="会务部">会务部</option>
-<option value="品牌中心">品牌中心</option>
-<option value="教育部">教育部</option>
-<option value="行政人力部">行政人力部</option>
-<option value="总裁办">总裁办</option>
-<option value="其他">其他</option>
-</select>
-<div class="q-wrap"><span class="q-num">1</span><div><div class="q">你觉得这个产品怎么样？第一反应是什么？</div>
-<textarea id="q1" rows="3" placeholder="说说你的第一印象"></textarea></div></div>
-<div class="q-wrap"><span class="q-num">2</span><div><div class="q">你有什么不放心的？</div>
-<textarea id="q2" rows="3" placeholder="技术、市场、价格、渠道……随便说"></textarea></div></div>
-<div class="q-wrap"><span class="q-num">3</span><div><div class="q">如果要你配合推这个产品，你需要什么支持？</div>
-<textarea id="q3" rows="3" placeholder="需要什么资源/帮助"></textarea></div></div>
-<div id="submitMsg" class="err"></div>
-<button class="btn btn-b" onclick="submitEval()">📤 提交</button>
+<div class="card" id="loading">
+<div class="loading">
+<div class="spinner"></div>
+<p style="color:#4A5568;font-size:14px;">正在加载提案信息…</p>
+</div>
 </div>
 
-<div id="thanks" class="card hide">
-<div class="thanks">
-<h2>✅ 提交成功</h2>
-<p>你的意见已提交给评估发起人。<br>后续结论会通过群消息同步。</p>
-<div class="foot">焦点小组评估 · 参与就是尊严，听取就是奖赏</div>
+<div id="survey" class="card" style="display:none;">
+<div class="header">
+<div class="icon">📋</div>
+<div><h1 id="titleName"></h1><span class="badge" id="statusBadge">焦点小组评估</span></div>
+</div>
+<div class="sub" id="titleSub">请认真阅读以下提案信息，然后说出你的真实想法</div>
+<div class="proposal-box" id="proposalBox"></div>
+
+<div class="progress" id="progressBar">
+<div class="prog-step active"></div><div class="prog-step"></div><div class="prog-step"></div><div class="prog-step"></div>
+</div>
+<div class="form-section" id="page1">
+<div class="form-group">
+<label><span class="num">1</span>你的名字</label>
+<input id="userName" placeholder="如：张经理" autocomplete="name">
+</div>
+<div class="input-row">
+<div class="form-group">
+<label><span class="num">─</span>部门</label>
+<select id="userDept">
+<option value="">请选择</option>
+<option value="产品部">📦 产品部</option>
+<option value="生产部">🏭 生产部</option>
+<option value="财务中心">💰 财务中心</option>
+<option value="市场部-大区">📊 市场部-大区</option>
+<option value="会务部">🎤 会务部</option>
+<option value="品牌中心">🎨 品牌中心</option>
+<option value="教育部">📚 教育部</option>
+<option value="行政人力部">📋 行政人力部</option>
+<option value="总裁办">🏛️ 总裁办</option>
+<option value="其他">其他</option>
+</select>
+</div>
+<div class="form-group">
+<label><span class="num">─</span>第一印象</label>
+<select id="userMood">
+<option value="">你的第一感觉是？</option>
+<option value="看好">😊 看好——这个产品不错</option>
+<option value="中立">🤔 中立——再看看</option>
+<option value="担忧">😟 担忧——有几个问题</option>
+<option value="反对">😕 反对——不太认同</option>
+</select>
+</div>
+</div>
+<button class="submit-btn" onclick="nextPage(2)">下一步 →</button>
+</div>
+
+<div class="form-section" id="page2" style="display:none;">
+<div class="form-group">
+<label><span class="num">2</span>你觉得这个产品怎么样？第一反应是什么？</label>
+<textarea id="q1" rows="3" placeholder="说说你的第一印象，不用想太多…" oninput="countChar(this,'c1',200)"></textarea>
+<div class="char-count"><span id="c1">0</span>/200</div>
+</div>
+<button class="submit-btn" onclick="nextPage(3)">下一步 →</button>
+<button class="submit-btn" style="background:#EDF2F7;color:#4A5568;font-size:13px;padding:8px;margin-top:4px;" onclick="prevPage(1)">← 上一步</button>
+</div>
+
+<div class="form-section" id="page3" style="display:none;">
+<div class="form-group">
+<label><span class="num">3</span>你有什么不放心的？（技术、市场、价格、渠道……随便说）</label>
+<textarea id="q2" rows="3" placeholder="担心什么就写什么，没有对错…" oninput="countChar(this,'c2',200)"></textarea>
+<div class="char-count"><span id="c2">0</span>/200</div>
+</div>
+<button class="submit-btn" onclick="nextPage(4)">下一步 →</button>
+<button class="submit-btn" style="background:#EDF2F7;color:#4A5568;font-size:13px;padding:8px;margin-top:4px;" onclick="prevPage(2)">← 上一步</button>
+</div>
+
+<div class="form-section" id="page4" style="display:none;">
+<div class="form-group">
+<label><span class="num">4</span>如果要你配合推这个产品，你需要什么支持？</label>
+<textarea id="q3" rows="3" placeholder="需要什么资源、什么帮助…" oninput="countChar(this,'c3',200)"></textarea>
+<div class="char-count"><span id="c3">0</span>/200</div>
+</div>
+<div id="submitMsg" class="err"></div>
+<button class="submit-btn" id="submitBtn" onclick="submitEval()">📤 提交我的意见</button>
+<button class="submit-btn" style="background:#EDF2F7;color:#4A5568;font-size:13px;padding:8px;margin-top:4px;" onclick="prevPage(3)">← 上一步</button>
+</div>
+</div>
+
+<div class="card" id="thanks" style="display:none;">
+<div class="thanks-page">
+<div class="thanks-icon">✅</div>
+<h2>感谢参与！</h2>
+<p>你的意见已成功提交。<br>评估发起人会认真阅读每一条反馈。</p>
+<p style="margin-top:12px;font-size:13px;color:#38A169;">🙏 参与就是尊严，听取就是奖赏</p>
+<div class="thanks-foot">共生源 · 焦点小组评估 · 你的声音很重要</div>
 </div>
 </div>
 
@@ -79,28 +166,77 @@ if(typeof __gsAPI === 'undefined'){
  var __gsKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : '';
  var __gsAPI = supabase.createClient(__gsURL, __gsKey);
  var __gsEID = new URLSearchParams(window.location.search).get('id');
+ var __curPage = 1;
+
+ function countChar(el,id,max){
+  var n = el.value.length;
+  document.getElementById(id).textContent = n;
+  if(n > max) el.style.borderColor = '#E53E3E';
+  else el.style.borderColor = '';
+ }
+
+ function showPage(n){
+  for(var i=1;i<=4;i++){
+   var p = document.getElementById('page'+i);
+   if(p) p.style.display = i===n ? 'block' : 'none';
+  }
+  __curPage = n;
+  // 更新进度条
+  var steps = document.querySelectorAll('.prog-step');
+  steps.forEach(function(s,i){
+   s.className = 'prog-step';
+   if(i+1 < n) s.classList.add('done');
+   else if(i+1 === n) s.classList.add('active');
+  });
+  document.getElementById('survey').scrollTop = 0;
+ }
+
+ function nextPage(n){ 
+  if(n===2){
+   var name = document.getElementById('userName').value.trim();
+   if(!name){ document.getElementById('submitMsg').textContent = '请先填名字'; return; }
+   document.getElementById('submitMsg').textContent = '';
+  }
+  showPage(n); 
+ }
+ function prevPage(n){ showPage(n); }
 
  if(!__gsEID){
-  document.getElementById('loading').innerHTML = '<p style="color:#E53E3E;text-align:center;">❌ 无效链接，缺少评估ID</p>';
+  document.getElementById('loading').innerHTML = '<div class="loading"><p style="color:#E53E3E;font-size:16px;">❌ 无效链接</p><p style="color:#4A5568;font-size:13px;margin-top:8px;">缺少评估ID，请联系发起人获取正确链接</p></div>';
  } else {
   __gsAPI.from('evaluations').select('*').eq('id',__gsEID).single().then(function(res){
    if(res.error||!res.data){
-    document.getElementById('loading').innerHTML = '<p style="color:#E53E3E;text-align:center;">❌ 未找到该评估</p>';
+    document.getElementById('loading').innerHTML = '<div class="loading"><p style="color:#E53E3E;font-size:16px;">❌ 未找到该评估</p><p style="color:#4A5568;font-size:13px;margin-top:8px;">链接可能已失效，请联系发起人</p></div>';
     return;
    }
    var e = res.data;
-   document.getElementById('loading').classList.add('hide');
-   document.getElementById('survey').classList.remove('hide');
-   document.getElementById('productInfo').innerHTML =
-    '<h1>'+e.name+'</h1>' +
-    '<div class="sub">'+(e.desc_text||'')+(e.price?' · '+e.price:'')+(e.launch_date?' · '+e.launch_date:'')+'</div>' +
-    '<div class="info">📌 正在评估「'+e.name+'」，想听听你的真实想法。<br>三个问题，3分钟填完。没有对错，放心说。</div>';
+   document.getElementById('loading').style.display = 'none';
+   document.getElementById('survey').style.display = 'block';
+   document.getElementById('titleName').textContent = e.name;
+   // 解析提案信息为美观展示
+   var text = e.desc_text || '暂无详细描述';
+   var html = '<div class="field">';
+   var lines = text.split('\n');
+   lines.forEach(function(line){
+    line = line.trim();
+    if(!line) return;
+    if(line.match(/^【.*?】/)){
+     var parts = line.match(/^【(.*?)】(.*)/);
+     if(parts) html += '<strong>【'+parts[1]+'】</strong>'+parts[2]+'<br>';
+    } else {
+     html += line+'<br>';
+    }
+   });
+   html += '</div>';
+   document.getElementById('proposalBox').innerHTML = html;
+   showPage(1);
   });
  }
 
  function submitEval(){
   var name = document.getElementById('userName').value.trim();
   var dept = document.getElementById('userDept').value;
+  var mood = document.getElementById('userMood').value;
   var q1 = document.getElementById('q1').value.trim();
   var q2 = document.getElementById('q2').value.trim();
   var q3 = document.getElementById('q3').value.trim();
@@ -108,21 +244,20 @@ if(typeof __gsAPI === 'undefined'){
   if(!dept){ document.getElementById('submitMsg').textContent = '请选部门'; return; }
   if(!q1){ document.getElementById('submitMsg').textContent = '请回答问题一'; return; }
   document.getElementById('submitMsg').textContent = '';
-  // 查是否已提交过
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').textContent = '⏳ 提交中…';
+  // 合并情绪到Q1
+  var fullQ1 = mood ? '['+mood+'] '+q1 : q1;
   __gsAPI.from('participants').select('id').eq('eval_id',__gsEID).eq('name',name).then(function(ex){
-   if(ex.data&&ex.data.length>0){
-    __gsAPI.from('participants').update({q1:q1,q2:q2,q3:q3,filled:true,department:dept}).eq('eval_id',__gsEID).eq('name',name).then(function(res){
-     if(res.error){ document.getElementById('submitMsg').textContent = '提交失败'; return; }
-     done();
-    });
-   } else {
-    __gsAPI.from('participants').insert({eval_id:__gsEID,name:name,department:dept,q1:q1,q2:q2,q3:q3,filled:true}).then(function(res){
-     if(res.error){ document.getElementById('submitMsg').textContent = '提交失败'; return; }
-     done();
-    });
-   }
+   var action = (ex.data&&ex.data.length>0) ?
+    __gsAPI.from('participants').update({q1:fullQ1,q2:q2,q3:q3,filled:true,department:dept}).eq('eval_id',__gsEID).eq('name',name) :
+    __gsAPI.from('participants').insert({eval_id:__gsEID,name:name,department:dept,q1:fullQ1,q2:q2,q3:q3,filled:true});
+   action.then(function(res){
+    if(res.error){ document.getElementById('submitMsg').textContent = '提交失败：'+res.error.message; document.getElementById('submitBtn').disabled=false; document.getElementById('submitBtn').textContent='📤 提交我的意见'; return; }
+    document.getElementById('survey').style.display = 'none';
+    document.getElementById('thanks').style.display = 'block';
+   });
   });
-  function done(){ document.getElementById('survey').classList.add('hide'); document.getElementById('thanks').classList.remove('hide'); }
  }
 }
 </script>
