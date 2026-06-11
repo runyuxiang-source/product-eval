@@ -230,6 +230,16 @@ if(typeof __gsDB === 'undefined'){
  }
 
  loadList();
+ // 检查URL参数自动填表
+ (function(){
+  var p = new URLSearchParams(window.location.search);
+  if(p.get('name')) document.getElementById('cName').value = p.get('name');
+  if(p.get('desc')) document.getElementById('cDesc').value = p.get('desc');
+  if(p.get('price')) document.getElementById('cPrice').value = p.get('price');
+  if(p.get('date')) document.getElementById('cDate').value = p.get('date');
+  if(p.get('why')) document.getElementById('cWhy').value = p.get('why');
+  if(p.get('name') && p.get('auto')=='1') showCreate();
+ })();
 }
 </script>
 </body>
