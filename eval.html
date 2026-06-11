@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>焦点小组评估 · 问卷</title>
+<title>焦点小组评估</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <style>
@@ -24,28 +24,23 @@ input,select{width:100%;padding:7px 10px;border:1px solid #E2E8F0;border-radius:
 @media(max-width:480px){.g2{grid-template-columns:1fr;}}
 .btn{padding:10px 28px;border:none;border-radius:6px;font-size:14px;cursor:pointer;margin:12px 0 4px;width:100%;}
 .btn-b{background:#2B6CB0;color:#fff;}
-.btn-b:hover{background:#1a4f8c;}
 .btn-s{background:#EDF2F7;color:#4A5568;}
 .thanks{text-align:center;padding:48px 20px;}
 .thanks h2{font-size:24px;color:#38A169;margin-bottom:8px;}
 .thanks p{color:#4A5568;line-height:1.6;}
 .hide{display:none;}
-.err{color:#E53E3E;font-size:12px;margin:4px 0;}
+.err{color:#E53E3E;font-size:12px;}
 .foot{text-align:center;font-size:11px;color:#A0AEC0;margin-top:16px;}
 </style>
 </head>
 <body>
 
-<!-- 加载 -->
 <div class="card" id="loading"><p style="text-align:center;color:#A0AEC0;">⏳ 加载中…</p></div>
 
-<!-- 问卷 -->
 <div id="survey" class="card hide">
 <div id="productInfo"></div>
-
 <label>你的姓名</label>
 <input id="userName" placeholder="如：张经理">
-
 <label>你的部门</label>
 <select id="userDept">
 <option value="">请选择</option>
@@ -60,31 +55,16 @@ input,select{width:100%;padding:7px 10px;border:1px solid #E2E8F0;border-radius:
 <option value="总裁办">总裁办</option>
 <option value="其他">其他</option>
 </select>
-
-<div class="q-wrap"><span class="q-num">1</span><div><div class="q">你觉得这个产品怎么样？第一反应是好是坏？</div>
-<textarea id="q1" rows="3" placeholder="说说你的第一印象，不用想太多"></textarea></div></div>
-
+<div class="q-wrap"><span class="q-num">1</span><div><div class="q">你觉得这个产品怎么样？第一反应是什么？</div>
+<textarea id="q1" rows="3" placeholder="说说你的第一印象"></textarea></div></div>
 <div class="q-wrap"><span class="q-num">2</span><div><div class="q">你有什么不放心的？</div>
-<textarea id="q2" rows="3" placeholder="技术、市场、价格、渠道……担心什么就写什么"></textarea></div></div>
-
+<textarea id="q2" rows="3" placeholder="技术、市场、价格、渠道……随便说"></textarea></div></div>
 <div class="q-wrap"><span class="q-num">3</span><div><div class="q">如果要你配合推这个产品，你需要什么支持？</div>
-<textarea id="q3" rows="3" placeholder="需要什么资源、什么帮助"></textarea></div></div>
-
+<textarea id="q3" rows="3" placeholder="需要什么资源/帮助"></textarea></div></div>
 <div id="submitMsg" class="err"></div>
 <button class="btn btn-b" onclick="submitEval()">📤 提交</button>
-<p style="font-size:11px;color:#A0AEC0;text-align:center;">提交后不能修改，请确认后再提交</p>
 </div>
 
-<!-- 已提交 -->
-<div id="submitted" class="card hide">
-<div class="thanks">
-<h2>🙏 已收到</h2>
-<p>你的意见已记录，感谢参与。<br><br>如需修改，点击下方按钮重新填写。</p>
-<button class="btn btn-s" onclick="editAgain()">✏️ 重新填写</button>
-</div>
-</div>
-
-<!-- 感谢 -->
 <div id="thanks" class="card hide">
 <div class="thanks">
 <h2>✅ 提交成功</h2>
@@ -94,57 +74,56 @@ input,select{width:100%;padding:7px 10px;border:1px solid #E2E8F0;border-radius:
 </div>
 
 <script>
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-const eid = new URLSearchParams(window.location.search).get('id');
-let hasSubmitted = false;
+if(typeof __gsAPI === 'undefined'){
+ var __gsURL = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '';
+ var __gsKey = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : '';
+ var __gsAPI = supabase.createClient(__gsURL, __gsKey);
+ var __gsEID = new URLSearchParams(window.location.search).get('id');
 
-if(!eid){
- document.getElementById('loading').innerHTML = '<p style="color:#E53E3E;text-align:center;">❌ 无效链接，缺少评估ID<br><span style="font-size:12px;">请联系发起人获取正确链接</span></p>';
-} else {
- loadEval();
-}
-
-async function loadEval(){
- const {data,error} = await supabase.from('evaluations').select('*').eq('id',eid).single();
- if(error||!data){
-  document.getElementById('loading').innerHTML = '<p style="color:#E53E3E;text-align:center;">❌ 未找到该评估<br><span style="font-size:12px;">链接可能已失效，请联系发起人</span></p>';
-  return;
- }
- const e = data;
- document.getElementById('loading').classList.add('hide');
- document.getElementById('survey').classList.remove('hide');
- document.getElementById('productInfo').innerHTML =
-  '<h1>'+e.name+'</h1>' +
-  '<div class="sub">'+(e.desc_text||'')+(e.price?' · '+e.price:'')+(e.launch_date?' · '+e.launch_date:'')+'</div>' +
-  '<div class="info">📌 正在评估「'+e.name+'」，想听听你的真实想法。<br>三个问题，3分钟填完。没有对错，放心说。</div>';
-}
-
-async function submitEval(){
- if(hasSubmitted) return;
- const name = document.getElementById('userName').value.trim();
- const dept = document.getElementById('userDept').value;
- const q1 = document.getElementById('q1').value.trim();
- const q2 = document.getElementById('q2').value.trim();
- const q3 = document.getElementById('q3').value.trim();
- if(!name){ document.getElementById('submitMsg').textContent = '请填名字'; return; }
- if(!dept){ document.getElementById('submitMsg').textContent = '请选部门'; return; }
- if(!q1){ document.getElementById('submitMsg').textContent = '请回答第一个问题'; return; }
- document.getElementById('submitMsg').textContent = '';
- hasSubmitted = true;
-
- // 先检查是否已提交过
- const {data:existing} = await supabase.from('participants').select('id').eq('eval_id',eid).eq('name',name);
- if(existing&&existing.length>0){
-  // 已存在 → 更新
-  const {error} = await supabase.from('participants').update({q1,q2,q3,filled:true,department:dept}).eq('eval_id',eid).eq('name',name);
-  if(error){ document.getElementById('submitMsg').textContent = '提交失败：'+error.message; hasSubmitted=false; return; }
+ if(!__gsEID){
+  document.getElementById('loading').innerHTML = '<p style="color:#E53E3E;text-align:center;">❌ 无效链接，缺少评估ID</p>';
  } else {
-  // 新记录
-  const {error} = await supabase.from('participants').insert({eval_id:eid,name,department:dept,q1,q2,q3,filled:true});
-  if(error){ document.getElementById('submitMsg').textContent = '提交失败：'+error.message; hasSubmitted=false; return; }
+  __gsAPI.from('evaluations').select('*').eq('id',__gsEID).single().then(function(res){
+   if(res.error||!res.data){
+    document.getElementById('loading').innerHTML = '<p style="color:#E53E3E;text-align:center;">❌ 未找到该评估</p>';
+    return;
+   }
+   var e = res.data;
+   document.getElementById('loading').classList.add('hide');
+   document.getElementById('survey').classList.remove('hide');
+   document.getElementById('productInfo').innerHTML =
+    '<h1>'+e.name+'</h1>' +
+    '<div class="sub">'+(e.desc_text||'')+(e.price?' · '+e.price:'')+(e.launch_date?' · '+e.launch_date:'')+'</div>' +
+    '<div class="info">📌 正在评估「'+e.name+'」，想听听你的真实想法。<br>三个问题，3分钟填完。没有对错，放心说。</div>';
+  });
  }
- document.getElementById('survey').classList.add('hide');
- document.getElementById('thanks').classList.remove('hide');
+
+ function submitEval(){
+  var name = document.getElementById('userName').value.trim();
+  var dept = document.getElementById('userDept').value;
+  var q1 = document.getElementById('q1').value.trim();
+  var q2 = document.getElementById('q2').value.trim();
+  var q3 = document.getElementById('q3').value.trim();
+  if(!name){ document.getElementById('submitMsg').textContent = '请填名字'; return; }
+  if(!dept){ document.getElementById('submitMsg').textContent = '请选部门'; return; }
+  if(!q1){ document.getElementById('submitMsg').textContent = '请回答问题一'; return; }
+  document.getElementById('submitMsg').textContent = '';
+  // 查是否已提交过
+  __gsAPI.from('participants').select('id').eq('eval_id',__gsEID).eq('name',name).then(function(ex){
+   if(ex.data&&ex.data.length>0){
+    __gsAPI.from('participants').update({q1:q1,q2:q2,q3:q3,filled:true,department:dept}).eq('eval_id',__gsEID).eq('name',name).then(function(res){
+     if(res.error){ document.getElementById('submitMsg').textContent = '提交失败'; return; }
+     done();
+    });
+   } else {
+    __gsAPI.from('participants').insert({eval_id:__gsEID,name:name,department:dept,q1:q1,q2:q2,q3:q3,filled:true}).then(function(res){
+     if(res.error){ document.getElementById('submitMsg').textContent = '提交失败'; return; }
+     done();
+    });
+   }
+  });
+  function done(){ document.getElementById('survey').classList.add('hide'); document.getElementById('thanks').classList.remove('hide'); }
+ }
 }
 </script>
 </body>
